@@ -1,0 +1,12 @@
+.canvaswrapper {
+  width: 100%;
+  background-color: white;
+  /* text-align: center; */
+}
+.rendercanvas {
+}
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}

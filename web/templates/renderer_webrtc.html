@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Raw Frame Renderer over WebRTC</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="/css/canvas.css" />
+  </head>
+  <body>
+    <div class="canvaswrapper" onkeydown="onkeydown" onkeyup="onkeyup">
+      <video class="rendercanvas" id="gamescreen"></video>
+    </div>
+    <div id="info"></div>
+    <script type="text/javascript" src="../js/utils/canvasadjust.js"></script>
+    <script
+      type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/pako/1.0.10/pako.min.js"
+    ></script>
+    <script>
+      var pc = new RTCPeerConnection({
+        iceServers: [
+          {
+            urls: "stun:stun.l.google.com:19302",
+          },
+        ],
+      });
+      var bytesReceived = 0;
+      var pako = window.pako;
+      var stream;
+      var info = document.getElementById("info");
+      var sendChannel;
+      var rec;
+      const startRendering = () => {
+        fetch("/meta")
+          .then(r => r.json())
+          .then(({ meta }) => {
+            // canvas.width = meta.W;
+            // canvas.height = meta.H;
+
+            conn = new WebSocket("ws://" + location.host + "/signaling");
+
+            conn.onopen = function(evt) {
+              info.textContent = "websocket connection opened";
+
+              sendChannel = pc.createDataChannel("foo");
+              sendChannel.onclose = () => {};
+              sendChannel.onopen = () => {};
+              pc.ontrack = (ev) => {
+                console.log(ev);
+                var el = document.getElementById("gamescreen");
+                el.volume = 0.1;
+                ev.streams[0].onaddtrack = (e) => {};
+                el.srcObject = ev.streams[0];
+                el.autoplay = true;
+                el.controls = false;
+
+                // document.getElementById("gamescreen").appendChild(el);
+              };
+              pc.oniceconnectionstatechange = e =>
+                (info.textContent =
+                  "rtc data channel state : " + pc.iceConnectionState);
+              pc.onicecandidate = event => {
+                if (event.candidate) {
+                  conn.send(
+                    JSON.stringify({
+                      Datatype: "icecandidate",
+                      Message: btoa(JSON.stringify(event.candidate))
+                    })
+                  );
+                }
+              };
+              pc.onnegotiationneeded = e => {
+                pc.createOffer({
+                  offerToReceiveVideo: true,
+                  offerToReceiveAudio: true,
+                })
+                  .then((d) => {
+                    pc.setLocalDescription(d);
+                  })
+                  .then(() => {
+                    conn.send(
+                      JSON.stringify({
+                        Datatype: "sdp",
+                        Message: btoa(JSON.stringify(pc.localDescription))
+                      })
+                    );
+                  });
+              };
+            };
+
+            conn.onmessage = evt => {
+              var data = JSON.parse(evt.data);
+
+              if (data.Datatype == "sdp") {
+                pc.setRemoteDescription(
+                  new RTCSessionDescription(JSON.parse(atob(data.Message)))
+                );
+              } else if (data.Datatype == "icecandidate") {
+                var candidate = JSON.parse(atob(data.Message));
+                pc.addIceCandidate(candidate);
+              }
+            };
+          });
+      };
+      var onkeydown = function(event) {
+        keycode = event.which || event.keyCode;
+        sendChannel.send((keycode + "d").padStart(4, "0"));
+      };
+      var onkeyup = function(event) {
+        keycode = event.which || event.keyCode;
+        sendChannel.send((keycode + "u").padStart(4, "0"));
+      };
+      startRendering();
+    </script>
+  </body>
+</html>
