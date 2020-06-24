@@ -157,10 +157,16 @@ func (r *WrRenderer) routerHandleSignaling(c *gin.Context) {
 		fmt.Printf("=== New DataChannel %s %d\n", d.Label(), d.ID())
 
 		d.OnOpen(func() {
+			r.ih.SetPadInOrder(d.ID())
+		})
+
+		d.OnClose(func() {
+			r.ih.RemovePad(d.ID())
 		})
 
 		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			r.ih.Reader.AddInput(msg.Data)
+			gipanKey := input.ConvertToGipanKeys(r.ih.GetPlayerOrderFromPad(d.ID()), msg.Data)
+			r.ih.Reader.AddInput(gipanKey)
 		})
 	})
 
