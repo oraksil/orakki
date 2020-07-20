@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"gitlab.com/oraksil/orakki/internal/domain/models"
 	"gitlab.com/oraksil/orakki/internal/domain/usecases"
 	"gitlab.com/oraksil/sil/backend/pkg/mq"
@@ -10,9 +13,13 @@ type HelloHandler struct {
 	GameCtrlUseCase *usecases.GameCtrlUseCase
 }
 
-func (h *HelloHandler) handleHello(ctx *mq.Context) {
+func (h *HelloHandler) handleHello(ctx *mq.Context) interface{} {
 	msg := ctx.GetMessage()
-	h.GameCtrlUseCase.Pong(&msg)
+	var value map[string]string
+	json.Unmarshal(msg.Payload, &value)
+	fmt.Println(value)
+
+	return h.GameCtrlUseCase.Pong()
 }
 
 func (h *HelloHandler) Routes() []mq.Route {

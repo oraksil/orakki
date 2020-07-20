@@ -10,6 +10,6 @@ require (
 	github.com/op/go-nanomsg v0.0.0-20160608204431-48d7bb6353de
 	github.com/pion/webrtc/v2 v2.2.16
 	github.com/spf13/cobra v0.0.5
-	gitlab.com/oraksil/sil/backend v0.0.0-20200720152010-8c080fe2eb7c
+	gitlab.com/oraksil/sil/backend v0.0.0-20200720232009-a59e7ab3349e
 	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 )
