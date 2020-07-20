@@ -1,12 +1,15 @@
-module github.com/oraksil/orakki
+module gitlab.com/oraksil/orakki
 
-go 1.13
+go 1.14
 
 require (
-	github.com/gin-contrib/cors v1.3.0
-	github.com/gin-gonic/gin v1.5.0
+	github.com/gin-contrib/cors v1.3.1
+	github.com/gin-gonic/gin v1.6.3
+	github.com/golobby/container v1.2.3
 	github.com/gorilla/websocket v1.4.1
 	github.com/op/go-nanomsg v0.0.0-20160608204431-48d7bb6353de
 	github.com/pion/webrtc/v2 v2.2.16
 	github.com/spf13/cobra v0.0.5
+	gitlab.com/oraksil/sil/backend v0.0.0-20200720152010-8c080fe2eb7c
+	gopkg.in/go-playground/validator.v8 v8.18.2 // indirect
 )

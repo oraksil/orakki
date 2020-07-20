@@ -1,13 +1,7 @@
-### Prerequisite
-It also requires Nanomsg to communicate with Gipan. Please refer to https://github.com/nanomsg/nanomsg for installation.
+## Setup
 
-### Run
+### Go get oraksil `mq`
 ```
-$ go run cmd/app.go show \
-    --resolution 480x320 \
-    --fps 30 \
-    --framesrc ipc://../gipan/imageframes.ipc  \
-    --soundsrc ipc://../gipan/soundframes.ipc  \
-    --keyevtqueue ipc://../gipan/keys.ipc
+$ git config --global url."git@gitlab.com:".insteadOf "https://gitlab.com/"
+$ GOPRIVATE=gitlab.com/oraksil/* go get gitlab.com/oraksil/sil/backend/pkg/mq
 ```
-or just `make run`
