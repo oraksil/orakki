@@ -10,5 +10,5 @@ require (
 	github.com/mitchellh/mapstructure v1.3.3 // indirect
 	github.com/op/go-nanomsg v0.0.0-20160608204431-48d7bb6353de
 	github.com/pion/webrtc/v2 v2.2.16
-	github.com/sangwonl/mqrpc v0.0.4
+	github.com/sangwonl/mqrpc v0.0.5
 )

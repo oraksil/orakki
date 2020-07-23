@@ -20,7 +20,7 @@ func newMessageService() services.MessageService {
 }
 
 func newGameCtrlUseCase() *usecases.GameCtrlUseCase {
-	var msgService mqrpc.MessageService
+	var msgService services.MessageService
 	container.Make(&msgService)
 
 	return &usecases.GameCtrlUseCase{MessageService: msgService}
