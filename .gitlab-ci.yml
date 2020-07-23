@@ -1,0 +1,31 @@
+image: golang:1.14
+
+variables:
+  REPO: gitlab.com
+  GROUP: oraksil
+  PROJECT: orakki
+  NANOMSG_SRC_PATH: $CI_PROJECT_DIR/3rdparty/nanomsg
+
+stages:
+  - test
+
+cache:
+  paths:
+    - $NANOMSG_SRC_PATH
+
+before_script:
+  - apt -y update
+  - apt install -y build-essential cmake git
+
+  - if [ ! -d $NANOMSG_SRC_PATH ]; then git clone https://github.com/nanomsg/nanomsg.git $NANOMSG_SRC_PATH; fi
+  - cd $NANOMSG_SRC_PATH && cmake . && cmake --build . && cmake --build . --target install && cd -
+
+  - mkdir -p $GOPATH/src/$REPO/$GROUP $GOPATH/src/_/builds
+  - cp -r $CI_PROJECT_DIR $GOPATH/src/$REPO/$GROUP/$PROJECT
+  - ln -s $GOPATH/src/$REPO/$GROUP $GOPATH/src/_/builds/$GROUP
+  - go get -v -d ./...
+
+unit_tests:
+  stage: test
+  script:
+    - go test -v ./... -coverprofile .testCoverage.txt

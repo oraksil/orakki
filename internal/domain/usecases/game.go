@@ -1,11 +1,9 @@
 package usecases
 
-import (
-	"gitlab.com/oraksil/sil/backend/pkg/mq"
-)
+import "gitlab.com/oraksil/orakki/internal/domain/services"
 
 type GameCtrlUseCase struct {
-	MessageService mq.MessageService
+	MessageService services.MessageService
 }
 
 func (uc *GameCtrlUseCase) Pong() interface{} {

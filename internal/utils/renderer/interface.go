@@ -1,8 +1,8 @@
 package renderer
 
 import (
-	"github.com/oraksil/orakki/internal/input"
-	"github.com/oraksil/orakki/pkg/utils"
+	"gitlab.com/oraksil/orakki/internal/utils"
+	"gitlab.com/oraksil/orakki/internal/utils/input"
 )
 
 type RendererType int

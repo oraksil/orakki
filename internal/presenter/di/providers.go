@@ -2,24 +2,25 @@ package di
 
 import (
 	"github.com/golobby/container"
+	"github.com/sangwonl/mqrpc"
+	"gitlab.com/oraksil/orakki/internal/domain/services"
 	"gitlab.com/oraksil/orakki/internal/domain/usecases"
 	"gitlab.com/oraksil/orakki/internal/presenter/mq/handlers"
-	"gitlab.com/oraksil/sil/backend/pkg/mq"
 )
 
-func newMqService() *mq.MqService {
-	return mq.NewMqService("amqp://oraksil:oraksil@localhost:5672/", "oraksil.mq.p2p", "oraksil.mq.broadcast")
+func newMqService() *mqrpc.MqService {
+	return mqrpc.NewMqService("amqp://oraksil:oraksil@localhost:5672/", "oraksil")
 }
 
-func newMessageService() mq.MessageService {
-	var mqService *mq.MqService
+func newMessageService() services.MessageService {
+	var mqService *mqrpc.MqService
 	container.Make(&mqService)
 
-	return &mq.DefaultMessageServiceImpl{MqService: mqService}
+	return &mqrpc.DefaultMessageServiceImpl{MqService: mqService}
 }
 
 func newGameCtrlUseCase() *usecases.GameCtrlUseCase {
-	var msgService mq.MessageService
+	var msgService mqrpc.MessageService
 	container.Make(&msgService)
 
 	return &usecases.GameCtrlUseCase{MessageService: msgService}

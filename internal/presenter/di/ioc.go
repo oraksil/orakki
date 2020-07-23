@@ -2,8 +2,8 @@ package di
 
 import (
 	"github.com/golobby/container"
+	"github.com/sangwonl/mqrpc"
 	"gitlab.com/oraksil/orakki/internal/presenter/mq/handlers"
-	"gitlab.com/oraksil/sil/backend/pkg/mq"
 )
 
 func InitContainer() {
@@ -13,8 +13,8 @@ func InitContainer() {
 	container.Singleton(newHelloHandler)
 }
 
-func InjectMqService() *mq.MqService {
-	var svc *mq.MqService
+func InjectMqService() *mqrpc.MqService {
+	var svc *mqrpc.MqService
 	container.Make(&svc)
 	return svc
 }

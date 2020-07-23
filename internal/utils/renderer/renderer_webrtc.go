@@ -10,10 +10,11 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
-	"github.com/oraksil/orakki/internal/input"
-	"github.com/oraksil/orakki/pkg/utils"
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
+
+	"gitlab.com/oraksil/orakki/internal/utils"
+	"gitlab.com/oraksil/orakki/internal/utils/input"
 )
 
 type WrRenderer struct {
@@ -192,7 +193,7 @@ func (r *WrRenderer) routerHandleSignaling(c *gin.Context) {
 		} else if m.Datatype == "sdp" {
 			offer := webrtc.SessionDescription{}
 			JsonDeserialize(m.Message, &offer)
-			fmt.Printf("=== Offer arriver : %s\n", offer)
+			fmt.Printf("=== Offer arriver : %s\n", offer.SDP)
 
 			err = peerConnection.SetRemoteDescription(offer)
 			if err != nil {
