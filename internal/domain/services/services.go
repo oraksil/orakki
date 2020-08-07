@@ -1,10 +1,11 @@
 package services
 
+import "time"
+
 type MessageService interface {
 	Identifier() string
-	AllParticipants() []string
-
-	Send(to string, msgType string, payload interface{})
-	Broadcast(msgType string, payload interface{})
-	Request(to string, msgType string, payload interface{}) interface{}
+	Send(to, msgType string, payload interface{}) error
+	SendToAny(msgType string, payload interface{}) error
+	Broadcast(msgType string, payload interface{}) error
+	Request(to, msgType string, payload interface{}, timeout time.Duration) (interface{}, error)
 }

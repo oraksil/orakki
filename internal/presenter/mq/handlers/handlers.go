@@ -1,29 +1,23 @@
 package handlers
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/sangwonl/mqrpc"
 	"gitlab.com/oraksil/orakki/internal/domain/models"
 	"gitlab.com/oraksil/orakki/internal/domain/usecases"
+	"gitlab.com/oraksil/orakki/internal/presenter/mq/dto"
 )
 
-type HelloHandler struct {
-	GameCtrlUseCase *usecases.GameCtrlUseCase
+type SystemHandler struct {
+	SystemMonitorUseCase *usecases.SystemStateMonitorUseCase
 }
 
-func (h *HelloHandler) handleHello(ctx *mqrpc.Context) interface{} {
-	msg := ctx.GetMessage()
-	var value map[string]string
-	json.Unmarshal(msg.Payload, &value)
-	fmt.Println(value)
-
-	return h.GameCtrlUseCase.Pong()
+func (h *SystemHandler) handleFethState(ctx *mqrpc.Context) interface{} {
+	sysState, _ := h.SystemMonitorUseCase.GetSystemState()
+	return dto.SystemStateToOrakkiState(sysState)
 }
 
-func (h *HelloHandler) Routes() []mqrpc.Route {
+func (h *SystemHandler) Routes() []mqrpc.Route {
 	return []mqrpc.Route{
-		{MsgType: models.MSG_HELLO, Handler: h.handleHello},
+		{MsgType: models.MSG_FETCH_ORAKKI_STATE, Handler: h.handleFethState},
 	}
 }

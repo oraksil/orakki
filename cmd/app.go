@@ -8,6 +8,8 @@ func main() {
 	di.InitContainer()
 
 	mqSvc := di.InjectMqService()
-	mqSvc.AddHandler(di.InjectHelloHandler())
-	mqSvc.Run("orakki-temp")
+	mqSvc.AddHandler(di.InjectSystemHandler())
+
+	conf := di.InjectServiceConfig()
+	mqSvc.Run(conf.PeerName)
 }
