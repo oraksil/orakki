@@ -21,6 +21,9 @@ func newServiceConfig() *services.ServiceConfig {
 	}
 
 	return &services.ServiceConfig{
+		MqRpcUri:       utils.GetStrEnv("MQRPC_URI", "amqp://oraksil:oraksil@localhost:5672/"),
+		MqRpcNamespace: utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
+
 		UseStaticOrakki: useStaticOrakki,
 		OrakkiId:        orakkiId,
 		PeerName:        utils.GetStrEnv("PEER_NAME", orakkiId),
@@ -28,7 +31,10 @@ func newServiceConfig() *services.ServiceConfig {
 }
 
 func newMqService() *mqrpc.MqService {
-	svc, err := mqrpc.NewMqService("amqp://oraksil:oraksil@localhost:5672/", "oraksil")
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
+	svc, err := mqrpc.NewMqService(serviceConf.MqRpcUri, serviceConf.MqRpcNamespace)
 	if err != nil {
 		panic(err)
 	}

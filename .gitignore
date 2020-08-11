@@ -2,3 +2,5 @@
 .vscode/
 cfg/
 
+.env
+
