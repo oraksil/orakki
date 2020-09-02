@@ -8,4 +8,8 @@ type ServiceConfig struct {
 
 	OrakkiId string
 	PeerName string
+
+	GipanImageFramesIpcPath string
+	GipanSoundFramesIpcPath string
+	GipanKeyInputsIpcPath   string
 }

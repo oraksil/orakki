@@ -11,7 +11,10 @@ func InitContainer() {
 	container.Singleton(newServiceConfig)
 	container.Singleton(newMqService)
 	container.Singleton(newMessageService)
+	container.Singleton(newWebRTCSession)
+	container.Singleton(newEngineFactory)
 	container.Singleton(newSystemMonitorUseCase)
+	container.Singleton(newSetupUseCase)
 	container.Singleton(newSystemHandler)
 }
 
