@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 env:
-    NANOMSG_SRC_PATH: $GITHUB_WORKSPACE/3rdparty/nanomsg
+  NANOMSG_BUILD_HOME: $GITHUB_WORKSPACE/3rdparty/nanomsg
 
 jobs:
   build:
@@ -17,16 +17,16 @@ jobs:
     - name: Cache
       uses: actions/cache@v2.1.1
       with:
-        path: $NANOMSG_SRC_PATH
+        path: $NANOMSG_BUILD_HOME
         key: third-party-libs
 
     - name: Set up 3rd-party libs
       run: |
         sudo apt -y update && sudo apt install -y build-essential cmake git
-        if [ ! -d $NANOMSG_SRC_PATH ];
-            then git clone https://github.com/nanomsg/nanomsg.git $NANOMSG_SRC_PATH;
+        if [ ! -d $NANOMSG_BUILD_HOME ]; then
+          git clone https://github.com/nanomsg/nanomsg.git $NANOMSG_BUILD_HOME;
         fi
-        cd $NANOMSG_SRC_PATH && cmake . && cmake --build . && sudo cmake --build . --target install && cd -
+        cd $NANOMSG_BUILD_HOME && cmake . && cmake --build . && sudo cmake --build . --target install && cd -
 
     - name: Set up Go 1.x
       uses: actions/setup-go@v2
@@ -41,8 +41,8 @@ jobs:
       run: |
         go get -v -t -d ./...
         if [ -f Gopkg.toml ]; then
-            curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-            dep ensure
+          curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+          dep ensure
         fi
 
     - name: Test
