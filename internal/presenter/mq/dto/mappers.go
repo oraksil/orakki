@@ -1,6 +1,6 @@
 package dto
 
-import "gitlab.com/oraksil/orakki/internal/domain/models"
+import "github.com/oraksil/orakki/internal/domain/models"
 
 func SystemStateToOrakkiState(src *models.SystemState) *OrakkiState {
 	return &OrakkiState{

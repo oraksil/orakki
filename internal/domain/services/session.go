@@ -1,6 +1,6 @@
 package services
 
-import "gitlab.com/oraksil/orakki/internal/domain/engine"
+import "github.com/oraksil/orakki/internal/domain/engine"
 
 type WebRTCSession interface {
 	OnCreatedOffer(

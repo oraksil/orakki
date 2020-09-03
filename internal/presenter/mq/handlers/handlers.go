@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"github.com/oraksil/orakki/internal/domain/models"
+	"github.com/oraksil/orakki/internal/domain/usecases"
+	"github.com/oraksil/orakki/internal/presenter/mq/dto"
 	"github.com/sangwonl/mqrpc"
-	"gitlab.com/oraksil/orakki/internal/domain/models"
-	"gitlab.com/oraksil/orakki/internal/domain/usecases"
-	"gitlab.com/oraksil/orakki/internal/presenter/mq/dto"
 )
 
 type SystemHandler struct {

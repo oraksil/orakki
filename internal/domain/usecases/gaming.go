@@ -1,7 +1,7 @@
 package usecases
 
 import (
-	"gitlab.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/engine"
 )
 
 type GamingUseCase struct {

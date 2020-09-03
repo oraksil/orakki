@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"gitlab.com/oraksil/orakki/internal/domain/engine"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
+	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/services"
 )
 
 type SetupUseCase struct {

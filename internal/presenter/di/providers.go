@@ -4,13 +4,13 @@ import (
 	"os"
 
 	"github.com/golobby/container"
+	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/services"
+	"github.com/oraksil/orakki/internal/domain/usecases"
+	"github.com/oraksil/orakki/internal/presenter/impl"
+	"github.com/oraksil/orakki/internal/presenter/mq/handlers"
+	"github.com/oraksil/orakki/pkg/utils"
 	"github.com/sangwonl/mqrpc"
-	"gitlab.com/oraksil/orakki/internal/domain/engine"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
-	"gitlab.com/oraksil/orakki/internal/domain/usecases"
-	"gitlab.com/oraksil/orakki/internal/presenter/impl"
-	"gitlab.com/oraksil/orakki/internal/presenter/mq/handlers"
-	"gitlab.com/oraksil/orakki/pkg/utils"
 )
 
 func newServiceConfig() *services.ServiceConfig {

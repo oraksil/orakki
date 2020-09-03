@@ -2,9 +2,9 @@ package di
 
 import (
 	"github.com/golobby/container"
+	"github.com/oraksil/orakki/internal/domain/services"
+	"github.com/oraksil/orakki/internal/presenter/mq/handlers"
 	"github.com/sangwonl/mqrpc"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
-	"gitlab.com/oraksil/orakki/internal/presenter/mq/handlers"
 )
 
 func InitContainer() {

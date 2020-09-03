@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"strconv"
 
-	"gitlab.com/oraksil/orakki/internal/domain/engine"
-	"gitlab.com/oraksil/orakki/pkg/utils"
+	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/pkg/utils"
 )
 
 const (

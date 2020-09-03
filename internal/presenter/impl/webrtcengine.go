@@ -1,10 +1,10 @@
 package impl
 
 import (
+	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/services"
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
-	"gitlab.com/oraksil/orakki/internal/domain/engine"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
 )
 
 // WebRTCRenderContext

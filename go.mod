@@ -1,4 +1,4 @@
-module gitlab.com/oraksil/orakki
+module github.com/oraksil/orakki
 
 go 1.14
 

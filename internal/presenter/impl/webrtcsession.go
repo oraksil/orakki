@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/services"
+	"github.com/oraksil/orakki/pkg/utils"
 	"github.com/pion/webrtc/v2"
-	"gitlab.com/oraksil/orakki/internal/domain/engine"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
-	"gitlab.com/oraksil/orakki/pkg/utils"
 )
 
 type PeerState int8
