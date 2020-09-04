@@ -17,8 +17,8 @@ jobs:
     - name: Set environment variables
       uses: allenevans/set-env@v1.0.0
       with:
-        NANOMSG_BUILD_HOME: ${{ env.GITHUB_WORKSPACE }}/3rdparty/nanomsg
-      
+        NANOMSG_BUILD_HOME: ${{ env.HOME }}/3rdparty/nanomsg
+  
     - name: Cache
       uses: actions/cache@v2.1.1
       with:
