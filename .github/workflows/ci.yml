@@ -6,18 +6,24 @@ on:
   pull_request:
     branches: [ master ]
 
-env:
-  NANOMSG_BUILD_HOME: $GITHUB_WORKSPACE/3rdparty/nanomsg
-
 jobs:
   build:
     name: Test
     runs-on: ubuntu-18.04
+
     steps:
+    - uses: Actions-R-Us/default-env@v1
+
+    - name: Set environment variables
+      uses: allenevans/set-env@v1.0.0
+      with:
+        NANOMSG_BUILD_HOME: ${{ env.GITHUB_WORKSPACE }}/3rdparty/nanomsg
+      
     - name: Cache
       uses: actions/cache@v2.1.1
       with:
-        path: $NANOMSG_BUILD_HOME
+        path: |
+          ${{ env.NANOMSG_BUILD_HOME }}
         key: third-party-libs
 
     - name: Set up 3rd-party libs
