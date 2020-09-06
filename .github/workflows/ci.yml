@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Test
+    runs-on: ubuntu-18.04
+
+    steps:
+    - uses: Actions-R-Us/default-env@v1
+
+    - name: Set environment variables
+      uses: allenevans/set-env@v1.0.0
+      with:
+        NANOMSG_BUILD_HOME: ${{ env.HOME }}/3rdparty/nanomsg
+  
+    - name: Cache
+      uses: actions/cache@v2.1.1
+      with:
+        path: |
+          ${{ env.NANOMSG_BUILD_HOME }}
+        key: third-party-libs
+
+    - name: Set up 3rd-party libs
+      run: |
+        sudo apt -y update && sudo apt install -y build-essential cmake git
+        if [ ! -d $NANOMSG_BUILD_HOME ]; then
+          git clone https://github.com/nanomsg/nanomsg.git $NANOMSG_BUILD_HOME;
+        fi
+        cd $NANOMSG_BUILD_HOME && cmake . && cmake --build . && sudo cmake --build . --target install && cd -
+
+    - name: Set up Go 1.x
+      uses: actions/setup-go@v2
+      with:
+        go-version: ^1.14
+      id: go
+
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    - name: Get dependencies
+      run: |
+        go get -v -t -d ./...
+        if [ -f Gopkg.toml ]; then
+          curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+          dep ensure
+        fi
+
+    - name: Test
+      run: go test -v ./... -coverprofile .testCoverage.txt
+

@@ -1,8 +1,8 @@
 package usecases
 
 import (
-	"gitlab.com/oraksil/orakki/internal/domain/models"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
+	"github.com/oraksil/orakki/internal/domain/models"
+	"github.com/oraksil/orakki/internal/domain/services"
 )
 
 type SystemStateMonitorUseCase struct {

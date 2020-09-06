@@ -2,16 +2,19 @@ package di
 
 import (
 	"github.com/golobby/container"
+	"github.com/oraksil/orakki/internal/domain/services"
+	"github.com/oraksil/orakki/internal/presenter/mq/handlers"
 	"github.com/sangwonl/mqrpc"
-	"gitlab.com/oraksil/orakki/internal/domain/services"
-	"gitlab.com/oraksil/orakki/internal/presenter/mq/handlers"
 )
 
 func InitContainer() {
 	container.Singleton(newServiceConfig)
 	container.Singleton(newMqService)
 	container.Singleton(newMessageService)
+	container.Singleton(newWebRTCSession)
+	container.Singleton(newEngineFactory)
 	container.Singleton(newSystemMonitorUseCase)
+	container.Singleton(newSetupUseCase)
 	container.Singleton(newSystemHandler)
 }
 
