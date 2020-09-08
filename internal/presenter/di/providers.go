@@ -108,3 +108,12 @@ func newSystemHandler() *handlers.SystemHandler {
 		SystemMonitorUseCase: sysMonUseCase,
 	}
 }
+
+func newSetupHandler() *handlers.SetupHandler {
+	var setupUseCase *usecases.SetupUseCase
+	container.Make(&setupUseCase)
+
+	return &handlers.SetupHandler{
+		SetupUseCase: setupUseCase,
+	}
+}
