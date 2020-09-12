@@ -85,9 +85,13 @@ func newSetupUseCase() *usecases.SetupUseCase {
 	var engineFactory engine.EngineFactory
 	container.Make(&engineFactory)
 
+	var msgService services.MessageService
+	container.Make(&msgService)
+
 	return &usecases.SetupUseCase{
-		WebRTCSession: webRTCSession,
-		EngineFactory: engineFactory,
+		WebRTCSession:  webRTCSession,
+		EngineFactory:  engineFactory,
+		MessageService: msgService,
 	}
 }
 

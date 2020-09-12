@@ -7,9 +7,9 @@ import (
 
 type SetupUseCase struct {
 	// ServiceConfig  *services.ServiceConfig
-	// MessageService services.MessageService
-	WebRTCSession services.WebRTCSession
-	EngineFactory engine.EngineFactory
+	MessageService services.MessageService
+	WebRTCSession  services.WebRTCSession
+	EngineFactory  engine.EngineFactory
 }
 
 func (uc *SetupUseCase) OnCreatedOffer(peerId, b64EncodedOffer string) {
