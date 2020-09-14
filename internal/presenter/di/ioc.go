@@ -13,7 +13,7 @@ func InitContainer() {
 	container.Singleton(newMessageService)
 	container.Singleton(newWebRTCSession)
 	container.Singleton(newEngineFactory)
-	container.Singleton(newSystemMonitorUseCase)
+	container.Singleton(newSystemUseCase)
 	container.Singleton(newSetupUseCase)
 	container.Singleton(newSystemHandler)
 	container.Singleton(newSetupHandler)

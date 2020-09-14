@@ -65,33 +65,37 @@ func newEngineFactory() engine.EngineFactory {
 	return impl.NewGameEngineFactory(serviceConf)
 }
 
-func newSystemMonitorUseCase() *usecases.SystemStateMonitorUseCase {
+func newSystemUseCase() *usecases.SystemUseCase {
 	var serviceConf *services.ServiceConfig
 	container.Make(&serviceConf)
 
 	var msgService services.MessageService
 	container.Make(&msgService)
 
-	return &usecases.SystemStateMonitorUseCase{
+	return &usecases.SystemUseCase{
 		ServiceConfig:  serviceConf,
 		MessageService: msgService,
 	}
 }
 
 func newSetupUseCase() *usecases.SetupUseCase {
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
+	var msgService services.MessageService
+	container.Make(&msgService)
+
 	var webRTCSession services.WebRTCSession
 	container.Make(&webRTCSession)
 
 	var engineFactory engine.EngineFactory
 	container.Make(&engineFactory)
 
-	var msgService services.MessageService
-	container.Make(&msgService)
-
 	return &usecases.SetupUseCase{
+		ServiceConfig:  serviceConf,
+		MessageService: msgService,
 		WebRTCSession:  webRTCSession,
 		EngineFactory:  engineFactory,
-		MessageService: msgService,
 	}
 }
 
@@ -105,19 +109,23 @@ func newGamingUseCase() *usecases.GamingUseCase {
 }
 
 func newSystemHandler() *handlers.SystemHandler {
-	var sysMonUseCase *usecases.SystemStateMonitorUseCase
-	container.Make(&sysMonUseCase)
+	var sysUseCase *usecases.SystemUseCase
+	container.Make(&sysUseCase)
 
 	return &handlers.SystemHandler{
-		SystemMonitorUseCase: sysMonUseCase,
+		SystemUseCase: sysUseCase,
 	}
 }
 
 func newSetupHandler() *handlers.SetupHandler {
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
 	var setupUseCase *usecases.SetupUseCase
 	container.Make(&setupUseCase)
 
 	return &handlers.SetupHandler{
-		SetupUseCase: setupUseCase,
+		ServiceConfig: serviceConf,
+		SetupUseCase:  setupUseCase,
 	}
 }

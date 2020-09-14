@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/models"
 	"github.com/oraksil/orakki/internal/domain/services"
 	"github.com/oraksil/orakki/pkg/utils"
 	"github.com/pion/webrtc/v2"
@@ -29,10 +30,9 @@ type WebRTCSessionImpl struct {
 	peerInputEvents chan engine.InputEvent
 }
 
-func (s *WebRTCSessionImpl) StartIceProcess(
-	peerId string,
-	onLocalIceCandidates func(peerId, b64EncodedIceCandidate string),
-	onIceConnectionStateChanged func(peerId, connectionState string)) error {
+func (s *WebRTCSessionImpl) StartIceProcess(peerId string,
+	onLocalIceCandidate func(b64EncodedIceCandidate string),
+	onIceConnectionStateChanged func(connectionState string)) error {
 
 	peer := s.getOrNewPeer(peerId)
 	if peer == nil {
@@ -42,11 +42,11 @@ func (s *WebRTCSessionImpl) StartIceProcess(
 	// Setup callback
 	peer.OnICECandidate(func(c *webrtc.ICECandidate) {
 		b64EncodedIceCandidate, _ := utils.EncodeB64EncodedJsonStr(c.ToJSON())
-		onLocalIceCandidates(peerId, b64EncodedIceCandidate)
+		onLocalIceCandidate(b64EncodedIceCandidate)
 	})
 
 	peer.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
-		onIceConnectionStateChanged(peerId, connectionState.String())
+		onIceConnectionStateChanged(connectionState.String())
 	})
 
 	peer.OnDataChannel(func(d *webrtc.DataChannel) {
@@ -76,40 +76,36 @@ func (s *WebRTCSessionImpl) StartIceProcess(
 	return nil
 }
 
-func (s *WebRTCSessionImpl) OnCreatedOffer(
-	peerId string,
-	b64EncodedOffer string,
-	onCreatedAnswer func(peerId, b64EncodedAnswer string)) error {
-
-	peer := s.getOrNewPeer(peerId)
+func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) {
+	peer := s.getOrNewPeer(sdp.PeerId)
 	if peer == nil {
-		return errors.New("peer connection does not exist.")
+		return "", errors.New("peer connection does not exist.")
 	}
 
-	if peerState, _ := s.peerStates[peerId]; peerState == PEER_STATE_TRACK_CONFIGURED {
-		return errors.New("peer is already configured.")
+	if peerState, _ := s.peerStates[sdp.PeerId]; peerState == PEER_STATE_TRACK_CONFIGURED {
+		return "", errors.New("peer is already configured.")
 	}
 
 	offer := webrtc.SessionDescription{}
-	err := utils.DecodeB64EncodedJsonStr(b64EncodedOffer, &offer)
+	err := utils.DecodeB64EncodedJsonStr(sdp.SdpBase64Encoded, &offer)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = s.attachMatchedMediaTracksToPeer(peer, &offer)
 	if err != nil {
-		return errors.New("failed to extract and attach matched media tracks from peer.")
+		return "", errors.New("failed to extract and attach matched media tracks from peer.")
 	}
-	s.peerStates[peerId] = PEER_STATE_TRACK_CONFIGURED
+	s.peerStates[sdp.PeerId] = PEER_STATE_TRACK_CONFIGURED
 
 	err = peer.SetRemoteDescription(offer)
 	if err != nil {
-		return errors.New("failed to set remote decription")
+		return "", errors.New("failed to set remote decription")
 	}
 
 	answer, err := peer.CreateAnswer(nil)
 	if err != nil {
-		return errors.New("failed to create answer")
+		return "", errors.New("failed to create answer")
 	}
 
 	// for firefox
@@ -117,25 +113,20 @@ func (s *WebRTCSessionImpl) OnCreatedOffer(
 
 	b64EncodedAnswer, err := utils.EncodeB64EncodedJsonStr(&answer)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	onCreatedAnswer(peerId, b64EncodedAnswer)
-
-	return nil
+	return b64EncodedAnswer, nil
 }
 
-func (s *WebRTCSessionImpl) OnRemoteIceCandidates(
-	peerId string,
-	b64EncodedIceCandidate string) error {
-
-	peer := s.getOrNewPeer(peerId)
+func (s *WebRTCSessionImpl) ProcessRemoteIce(remoteIce models.IceCandidate) error {
+	peer := s.getOrNewPeer(remoteIce.PeerId)
 	if peer == nil {
 		return errors.New("peer connection does not exist.")
 	}
 
 	var iceCandidate webrtc.ICECandidateInit
-	err := utils.DecodeB64EncodedJsonStr(b64EncodedIceCandidate, &iceCandidate)
+	err := utils.DecodeB64EncodedJsonStr(remoteIce.IceBase64Encoded, &iceCandidate)
 	if err != nil {
 		return err
 	}
