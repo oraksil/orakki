@@ -1,27 +1,20 @@
 package models
 
-type OrakkiState struct {
-	OrakkiId string
-	State    int
+type PrepareOrakki struct {
+	GameId int64
+}
+
+type Orakki struct {
+	Id    string
+	State int
 }
 
 type SdpInfo struct {
-	PeerId           string
+	PeerId           int64 // game-id or player-id
 	SdpBase64Encoded string
 }
 
 type IceCandidate struct {
-	PeerId           string
+	PeerId           int64 // game-id or player-id
 	IceBase64Encoded string
-}
-
-type SetupAnswer struct {
-	PeerId string
-	Answer string
-}
-
-type Icecandidate struct {
-	PlayerId  int64
-	OrakkiId  string
-	IceString string
 }

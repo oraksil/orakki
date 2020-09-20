@@ -21,8 +21,8 @@ const (
 )
 
 type WebRTCSessionImpl struct {
-	peers      map[string]*webrtc.PeerConnection
-	peerStates map[string]PeerState
+	peers      map[int64]*webrtc.PeerConnection
+	peerStates map[int64]PeerState
 
 	videoTracks map[int]*webrtc.Track
 	audioTracks map[int]*webrtc.Track
@@ -30,7 +30,7 @@ type WebRTCSessionImpl struct {
 	peerInputEvents chan engine.InputEvent
 }
 
-func (s *WebRTCSessionImpl) StartIceProcess(peerId string,
+func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 	onLocalIceCandidate func(b64EncodedIceCandidate string),
 	onIceConnectionStateChanged func(connectionState string)) error {
 
@@ -41,7 +41,7 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId string,
 
 	// Setup callback
 	peer.OnICECandidate(func(c *webrtc.ICECandidate) {
-		b64EncodedIceCandidate, _ := utils.EncodeB64EncodedJsonStr(c.ToJSON())
+		b64EncodedIceCandidate, _ := utils.EncodeToB64EncodedJsonStr(c.ToJSON())
 		onLocalIceCandidate(b64EncodedIceCandidate)
 	})
 
@@ -87,7 +87,7 @@ func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) 
 	}
 
 	offer := webrtc.SessionDescription{}
-	err := utils.DecodeB64EncodedJsonStr(sdp.SdpBase64Encoded, &offer)
+	err := utils.DecodeFromB64EncodedJsonStr(sdp.SdpBase64Encoded, &offer)
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +111,7 @@ func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) 
 	// for firefox
 	// answer.SDP = strings.ReplaceAll(answer.SDP, "a=sendrecv", "a=sendonly")
 
-	b64EncodedAnswer, err := utils.EncodeB64EncodedJsonStr(&answer)
+	b64EncodedAnswer, err := utils.EncodeToB64EncodedJsonStr(&answer)
 	if err != nil {
 		return "", err
 	}
@@ -126,7 +126,7 @@ func (s *WebRTCSessionImpl) ProcessRemoteIce(remoteIce models.IceCandidate) erro
 	}
 
 	var iceCandidate webrtc.ICECandidateInit
-	err := utils.DecodeB64EncodedJsonStr(remoteIce.IceBase64Encoded, &iceCandidate)
+	err := utils.DecodeFromB64EncodedJsonStr(remoteIce.IceBase64Encoded, &iceCandidate)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (s *WebRTCSessionImpl) GetInputContext() engine.InputContext {
 	return newWebRTCInputContext(s.peerInputEvents)
 }
 
-func (s *WebRTCSessionImpl) getOrNewPeer(peerId string) *webrtc.PeerConnection {
+func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64) *webrtc.PeerConnection {
 	peer, ok := s.peers[peerId]
 	if ok {
 		return peer
@@ -231,8 +231,8 @@ func (s *WebRTCSessionImpl) getOrNewAudioTrackByPayloadType(payloadType int) *we
 
 func NewWebRTCSession() services.WebRTCSession {
 	return &WebRTCSessionImpl{
-		peers:           make(map[string]*webrtc.PeerConnection),
-		peerStates:      make(map[string]PeerState),
+		peers:           make(map[int64]*webrtc.PeerConnection),
+		peerStates:      make(map[int64]PeerState),
 		audioTracks:     make(map[int]*webrtc.Track),
 		videoTracks:     make(map[int]*webrtc.Track),
 		peerInputEvents: make(chan engine.InputEvent, 1024),

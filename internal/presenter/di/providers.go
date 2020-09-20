@@ -14,21 +14,12 @@ import (
 )
 
 func newServiceConfig() *services.ServiceConfig {
-	useStaticOrakki := utils.GetBoolEnv("USE_STATIC_ORAKKI", false)
-	var orakkiId string
-	if useStaticOrakki {
-		orakkiId = utils.GetStrEnv("STATIC_ORAKKI_ID", "orakki-static")
-	} else {
-		orakkiId, _ = os.Hostname()
-	}
+	hostname, _ := os.Hostname()
 
 	return &services.ServiceConfig{
-		MqRpcUri:       utils.GetStrEnv("MQRPC_URI", "amqp://oraksil:oraksil@localhost:5672/"),
-		MqRpcNamespace: utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
-
-		UseStaticOrakki: useStaticOrakki,
-		OrakkiId:        orakkiId,
-		PeerName:        utils.GetStrEnv("PEER_NAME", orakkiId),
+		MqRpcUri:        utils.GetStrEnv("MQRPC_URI", "amqp://oraksil:oraksil@localhost:5672/"),
+		MqRpcNamespace:  utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
+		MqRpcIdentifier: utils.GetStrEnv("MQRPC_IDENTIFIER", hostname),
 
 		GipanImageFramesIpcPath: utils.GetStrEnv("IPC_IMAGE_FRAMES", "/var/oraksil/ipc/images.ipc"),
 		GipanSoundFramesIpcPath: utils.GetStrEnv("IPC_SOUND_FRAMES", "/var/oraksil/ipc/sounds.ipc"),
@@ -65,19 +56,6 @@ func newEngineFactory() engine.EngineFactory {
 	return impl.NewGameEngineFactory(serviceConf)
 }
 
-func newSystemUseCase() *usecases.SystemUseCase {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
-	var msgService services.MessageService
-	container.Make(&msgService)
-
-	return &usecases.SystemUseCase{
-		ServiceConfig:  serviceConf,
-		MessageService: msgService,
-	}
-}
-
 func newSetupUseCase() *usecases.SetupUseCase {
 	var serviceConf *services.ServiceConfig
 	container.Make(&serviceConf)
@@ -105,15 +83,6 @@ func newGamingUseCase() *usecases.GamingUseCase {
 
 	return &usecases.GamingUseCase{
 		EngineFactory: engineFactory,
-	}
-}
-
-func newSystemHandler() *handlers.SystemHandler {
-	var sysUseCase *usecases.SystemUseCase
-	container.Make(&sysUseCase)
-
-	return &handlers.SystemHandler{
-		SystemUseCase: sysUseCase,
 	}
 }
 

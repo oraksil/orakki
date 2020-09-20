@@ -54,7 +54,7 @@ var baseKeyPad = KeyPad{
 }
 
 var gipanKeys = map[int]KeyPad{
-	0: KeyPad{
+	0: {
 		up:      38,
 		down:    40,
 		left:    37,
@@ -70,7 +70,7 @@ var gipanKeys = map[int]KeyPad{
 		button7: 81,
 		button8: 87,
 	},
-	1: KeyPad{
+	1: {
 		up:      1,
 		down:    2,
 		left:    3,
@@ -86,7 +86,7 @@ var gipanKeys = map[int]KeyPad{
 		button7: 13,
 		button8: 14,
 	},
-	2: KeyPad{
+	2: {
 		up:      15,
 		down:    16,
 		left:    17,
@@ -102,7 +102,7 @@ var gipanKeys = map[int]KeyPad{
 		button7: 27,
 		button8: 28,
 	},
-	3: KeyPad{
+	3: {
 		up:      29,
 		down:    30,
 		left:    31,

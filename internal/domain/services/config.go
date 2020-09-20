@@ -1,13 +1,9 @@
 package services
 
 type ServiceConfig struct {
-	MqRpcUri       string
-	MqRpcNamespace string
-
-	UseStaticOrakki bool
-
-	OrakkiId string
-	PeerName string
+	MqRpcUri        string
+	MqRpcNamespace  string
+	MqRpcIdentifier string
 
 	GipanImageFramesIpcPath string
 	GipanSoundFramesIpcPath string
