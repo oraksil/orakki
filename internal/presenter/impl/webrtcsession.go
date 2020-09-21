@@ -2,6 +2,7 @@ package impl
 
 import (
 	"errors"
+	"fmt"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -41,11 +42,18 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 
 	// Setup callback
 	peer.OnICECandidate(func(c *webrtc.ICECandidate) {
-		b64EncodedIceCandidate, _ := utils.EncodeToB64EncodedJsonStr(c.ToJSON())
+		b64EncodedIceCandidate := ""
+		if c != nil {
+			b64EncodedIceCandidate, _ = utils.EncodeToB64EncodedJsonStr(c.ToJSON())
+			fmt.Println("sending local ice candidate.")
+		} else {
+			fmt.Println("sending final ack for local ice candidate.")
+		}
 		onLocalIceCandidate(b64EncodedIceCandidate)
 	})
 
 	peer.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+		fmt.Printf("ice connection state changed: %s.\n", connectionState.String())
 		onIceConnectionStateChanged(connectionState.String())
 	})
 
@@ -108,6 +116,11 @@ func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) 
 		return "", errors.New("failed to create answer")
 	}
 
+	err = peer.SetLocalDescription(answer)
+	if err != nil {
+		return "", errors.New("failed to set local description")
+	}
+
 	// for firefox
 	// answer.SDP = strings.ReplaceAll(answer.SDP, "a=sendrecv", "a=sendonly")
 
@@ -115,6 +128,8 @@ func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) 
 	if err != nil {
 		return "", err
 	}
+
+	fmt.Println("sdp offer is configured, returning sdp answer.")
 
 	return b64EncodedAnswer, nil
 }
@@ -135,6 +150,8 @@ func (s *WebRTCSessionImpl) ProcessRemoteIce(remoteIce models.IceCandidate) erro
 	if err != nil {
 		return err
 	}
+
+	fmt.Println("player ice candidate added.")
 
 	return nil
 }

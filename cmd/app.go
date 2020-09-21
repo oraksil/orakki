@@ -14,5 +14,5 @@ func main() {
 	mqSvc.AddHandler(di.InjectSetupHandler())
 
 	conf := di.InjectServiceConfig()
-	mqSvc.Run(conf.MqRpcIdentifier)
+	mqSvc.Run(conf.MqRpcIdentifier, false)
 }

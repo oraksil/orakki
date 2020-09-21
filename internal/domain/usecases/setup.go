@@ -12,11 +12,12 @@ type SetupUseCase struct {
 	WebRTCSession  services.WebRTCSession
 	EngineFactory  engine.EngineFactory
 
-	GameId int64
+	// localIceCandidatesQ chan
+	gameId int64
 }
 
 func (uc *SetupUseCase) Prepare(prepare models.PrepareOrakki) (*models.Orakki, error) {
-	uc.GameId = prepare.GameId
+	uc.gameId = prepare.GameId
 
 	return &models.Orakki{
 		Id:    uc.ServiceConfig.MqRpcIdentifier,
@@ -37,7 +38,7 @@ func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, er
 	}
 
 	answerSdp := &models.SdpInfo{
-		PeerId:           uc.GameId,
+		PeerId:           uc.gameId,
 		SdpBase64Encoded: b64EncodedAnswer,
 	}
 
@@ -50,7 +51,7 @@ func (uc *SetupUseCase) ProcessRemoteIceCandidate(remoteIce models.IceCandidate)
 
 func (uc *SetupUseCase) onLocalIceCandidate(b64EncodedIceCandidate string) {
 	localIce := models.IceCandidate{
-		PeerId:           uc.GameId,
+		PeerId:           uc.gameId,
 		IceBase64Encoded: b64EncodedIceCandidate,
 	}
 	uc.MessageService.SendToAny(models.MsgRemoteIceCandidate, localIce)
