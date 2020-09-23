@@ -2,44 +2,62 @@ package usecases
 
 import (
 	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/models"
 	"github.com/oraksil/orakki/internal/domain/services"
 )
 
 type SetupUseCase struct {
-	// ServiceConfig  *services.ServiceConfig
-	// MessageService services.MessageService
-	WebRTCSession services.WebRTCSession
-	EngineFactory engine.EngineFactory
+	ServiceConfig  *services.ServiceConfig
+	MessageService services.MessageService
+	WebRTCSession  services.WebRTCSession
+	EngineFactory  engine.EngineFactory
+
+	// localIceCandidatesQ chan
+	gameId int64
 }
 
-func (uc *SetupUseCase) OnCreatedOffer(peerId, b64EncodedOffer string) {
+func (uc *SetupUseCase) Prepare(prepare models.PrepareOrakki) (*models.Orakki, error) {
+	uc.gameId = prepare.GameId
+
+	return &models.Orakki{
+		Id:    uc.ServiceConfig.MqRpcIdentifier,
+		State: models.OrakkiStateReady,
+	}, nil
+}
+
+func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, error) {
 	uc.WebRTCSession.StartIceProcess(
-		peerId,
-		uc.onLocalIceCandidates,
+		sdp.PeerId,
+		uc.onLocalIceCandidate,
 		uc.onIceConnectionStateChanged,
 	)
 
-	uc.WebRTCSession.OnCreatedOffer(
-		peerId,
-		b64EncodedOffer,
-		uc.onCreatedAnswer,
-	)
+	b64EncodedAnswer, err := uc.WebRTCSession.ProcessNewOffer(sdp)
+	if err != nil {
+		return nil, err
+	}
+
+	answerSdp := &models.SdpInfo{
+		PeerId:           uc.gameId,
+		SdpBase64Encoded: b64EncodedAnswer,
+	}
+
+	return answerSdp, nil
 }
 
-func (uc *SetupUseCase) OnRemoteIceCandidates(peerId, b64EncodedIceCandidate string) {
-	uc.WebRTCSession.OnRemoteIceCandidates(
-		peerId,
-		b64EncodedIceCandidate,
-	)
+func (uc *SetupUseCase) ProcessRemoteIceCandidate(remoteIce models.IceCandidate) {
+	uc.WebRTCSession.ProcessRemoteIce(remoteIce)
 }
 
-func (uc *SetupUseCase) onCreatedAnswer(peerId, b64EncodedAnswer string) {
+func (uc *SetupUseCase) onLocalIceCandidate(b64EncodedIceCandidate string) {
+	localIce := models.IceCandidate{
+		PeerId:           uc.gameId,
+		IceBase64Encoded: b64EncodedIceCandidate,
+	}
+	uc.MessageService.SendToAny(models.MsgRemoteIceCandidate, localIce)
 }
 
-func (uc *SetupUseCase) onLocalIceCandidates(peerId, b64EncodedIceCandidate string) {
-}
-
-func (uc *SetupUseCase) onIceConnectionStateChanged(peerId, connectionState string) {
+func (uc *SetupUseCase) onIceConnectionStateChanged(connectionState string) {
 	if connectionState == "connected" {
 		rc := uc.WebRTCSession.GetRenderContext()
 		ic := uc.WebRTCSession.GetInputContext()

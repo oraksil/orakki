@@ -1,21 +1,21 @@
 package services
 
-import "github.com/oraksil/orakki/internal/domain/engine"
+import (
+	"github.com/oraksil/orakki/internal/domain/engine"
+	"github.com/oraksil/orakki/internal/domain/models"
+)
 
 type WebRTCSession interface {
-	OnCreatedOffer(
-		peerId string,
-		b64EncodedOffer string,
-		onCreatedAnswer func(peerId, b64EncodedAnswer string)) error
+	ProcessNewOffer(
+		sdp models.SdpInfo) (string, error)
 
 	StartIceProcess(
-		peerId string,
-		onLocalIceCandidates func(peerId, b64EncodedIceCandidate string),
-		onIceStateChanged func(peerId, connectionState string)) error
+		peerId int64,
+		onLocalIceCandidate func(b64EncodedIceCandidate string),
+		onIceStateChanged func(connectionState string)) error
 
-	OnRemoteIceCandidates(
-		peerId string,
-		b64EncodedIceCandidate string) error
+	ProcessRemoteIce(
+		iceCandidate models.IceCandidate) error
 
 	GetRenderContext() engine.RenderContext
 	GetInputContext() engine.InputContext

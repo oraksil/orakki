@@ -11,8 +11,8 @@ func main() {
 	di.InitContainer()
 
 	mqSvc := di.InjectMqService()
-	mqSvc.AddHandler(di.InjectSystemHandler())
+	mqSvc.AddHandler(di.InjectSetupHandler())
 
 	conf := di.InjectServiceConfig()
-	mqSvc.Run(conf.PeerName)
+	mqSvc.Run(conf.MqRpcIdentifier, false)
 }

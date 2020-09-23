@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 )
 
-func DecodeB64EncodedJsonStr(in string, obj interface{}) error {
+func DecodeFromB64EncodedJsonStr(in string, obj interface{}) error {
 	b, err := base64.StdEncoding.DecodeString(in)
 	if err != nil {
 		return err
@@ -19,7 +19,7 @@ func DecodeB64EncodedJsonStr(in string, obj interface{}) error {
 	return nil
 }
 
-func EncodeB64EncodedJsonStr(obj interface{}) (string, error) {
+func EncodeToB64EncodedJsonStr(obj interface{}) (string, error) {
 	b, err := json.Marshal(obj)
 	if err != nil {
 		return "", err

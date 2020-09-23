@@ -13,9 +13,8 @@ func InitContainer() {
 	container.Singleton(newMessageService)
 	container.Singleton(newWebRTCSession)
 	container.Singleton(newEngineFactory)
-	container.Singleton(newSystemMonitorUseCase)
 	container.Singleton(newSetupUseCase)
-	container.Singleton(newSystemHandler)
+	container.Singleton(newSetupHandler)
 }
 
 func InjectServiceConfig() *services.ServiceConfig {
@@ -30,8 +29,8 @@ func InjectMqService() *mqrpc.MqService {
 	return svc
 }
 
-func InjectSystemHandler() *handlers.SystemHandler {
-	var handler *handlers.SystemHandler
+func InjectSetupHandler() *handlers.SetupHandler {
+	var handler *handlers.SetupHandler
 	container.Make(&handler)
 	return handler
 }

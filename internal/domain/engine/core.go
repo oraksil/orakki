@@ -17,7 +17,7 @@ const (
 )
 
 type InputEvent struct {
-	PlayerId string
+	PlayerId int64
 	Type     int
 	Data     []byte
 }
@@ -49,7 +49,7 @@ type GameEngine struct {
 
 	running bool
 
-	playerSlots map[string]int
+	playerSlots map[int64]int
 }
 
 func (e *GameEngine) Run() {
@@ -116,7 +116,7 @@ func isSlotOccupied(slotNumbers []int, slotNo int) bool {
 	return false
 }
 
-func (e *GameEngine) joinPlayer(playerId string) {
+func (e *GameEngine) joinPlayer(playerId int64) {
 	numOccupiedSlots := len(e.playerSlots)
 	if numOccupiedSlots >= maxPlayerSlots {
 		return
@@ -135,7 +135,7 @@ func (e *GameEngine) joinPlayer(playerId string) {
 	}
 }
 
-func (e *GameEngine) leavePlayer(playerId string) {
+func (e *GameEngine) leavePlayer(playerId int64) {
 	if _, ok := e.playerSlots[playerId]; ok {
 		delete(e.playerSlots, playerId)
 	}

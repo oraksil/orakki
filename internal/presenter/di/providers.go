@@ -14,21 +14,12 @@ import (
 )
 
 func newServiceConfig() *services.ServiceConfig {
-	useStaticOrakki := utils.GetBoolEnv("USE_STATIC_ORAKKI", false)
-	var orakkiId string
-	if useStaticOrakki {
-		orakkiId = utils.GetStrEnv("STATIC_ORAKKI_ID", "orakki-static")
-	} else {
-		orakkiId, _ = os.Hostname()
-	}
+	hostname, _ := os.Hostname()
 
 	return &services.ServiceConfig{
-		MqRpcUri:       utils.GetStrEnv("MQRPC_URI", "amqp://oraksil:oraksil@localhost:5672/"),
-		MqRpcNamespace: utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
-
-		UseStaticOrakki: useStaticOrakki,
-		OrakkiId:        orakkiId,
-		PeerName:        utils.GetStrEnv("PEER_NAME", orakkiId),
+		MqRpcUri:        utils.GetStrEnv("MQRPC_URI", "amqp://oraksil:oraksil@localhost:5672/"),
+		MqRpcNamespace:  utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
+		MqRpcIdentifier: utils.GetStrEnv("MQRPC_IDENTIFIER", hostname),
 
 		GipanImageFramesIpcPath: utils.GetStrEnv("IPC_IMAGE_FRAMES", "/var/oraksil/ipc/images.ipc"),
 		GipanSoundFramesIpcPath: utils.GetStrEnv("IPC_SOUND_FRAMES", "/var/oraksil/ipc/sounds.ipc"),
@@ -65,20 +56,13 @@ func newEngineFactory() engine.EngineFactory {
 	return impl.NewGameEngineFactory(serviceConf)
 }
 
-func newSystemMonitorUseCase() *usecases.SystemStateMonitorUseCase {
+func newSetupUseCase() *usecases.SetupUseCase {
 	var serviceConf *services.ServiceConfig
 	container.Make(&serviceConf)
 
 	var msgService services.MessageService
 	container.Make(&msgService)
 
-	return &usecases.SystemStateMonitorUseCase{
-		ServiceConfig:  serviceConf,
-		MessageService: msgService,
-	}
-}
-
-func newSetupUseCase() *usecases.SetupUseCase {
 	var webRTCSession services.WebRTCSession
 	container.Make(&webRTCSession)
 
@@ -86,8 +70,10 @@ func newSetupUseCase() *usecases.SetupUseCase {
 	container.Make(&engineFactory)
 
 	return &usecases.SetupUseCase{
-		WebRTCSession: webRTCSession,
-		EngineFactory: engineFactory,
+		ServiceConfig:  serviceConf,
+		MessageService: msgService,
+		WebRTCSession:  webRTCSession,
+		EngineFactory:  engineFactory,
 	}
 }
 
@@ -100,11 +86,15 @@ func newGamingUseCase() *usecases.GamingUseCase {
 	}
 }
 
-func newSystemHandler() *handlers.SystemHandler {
-	var sysMonUseCase *usecases.SystemStateMonitorUseCase
-	container.Make(&sysMonUseCase)
+func newSetupHandler() *handlers.SetupHandler {
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
 
-	return &handlers.SystemHandler{
-		SystemMonitorUseCase: sysMonUseCase,
+	var setupUseCase *usecases.SetupUseCase
+	container.Make(&setupUseCase)
+
+	return &handlers.SetupHandler{
+		ServiceConfig: serviceConf,
+		SetupUseCase:  setupUseCase,
 	}
 }
