@@ -135,10 +135,10 @@ func (g *GipanDriverImpl) ReadAudioFrame() ([]byte, error) {
 }
 
 func (g *GipanDriverImpl) WriteKeyInput(playerSlotNo int, key []byte) error {
-	// key input from browser: 0005d, 0005u
+	// key input from browser: 005d, 005u
 
-	keyCode, _ := strconv.Atoi(string(key[0:4]))
-	keyState := key[4]
+	keyCode, _ := strconv.Atoi(string(key[0:3]))
+	keyState := key[3]
 
 	basePad := reflect.ValueOf(baseKeyPad)
 	gipanPad := reflect.ValueOf(gipanKeys[playerSlotNo])
@@ -148,7 +148,7 @@ func (g *GipanDriverImpl) WriteKeyInput(playerSlotNo int, key []byte) error {
 		if basePad.Field(i).Int() == int64(keyCode) {
 			keyName := basePad.Type().Field(i).Name
 			gipanKeyCode := gipanPad.FieldByName(keyName).Int()
-			gipanKey = []byte(fmt.Sprintf("%04d%c", gipanKeyCode, keyState))
+			gipanKey = []byte(fmt.Sprintf("%03d%c", gipanKeyCode, keyState))
 		}
 	}
 

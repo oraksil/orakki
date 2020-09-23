@@ -105,6 +105,10 @@ func (f *WebRTCGameEngineFactory) SetContexts(rc engine.RenderContext, ic engine
 	f.inputContext = ic
 }
 
+func (f *WebRTCGameEngineFactory) CanCreateEngine() bool {
+	return f.renderContext != nil && f.inputContext != nil
+}
+
 func (f *WebRTCGameEngineFactory) CreateEngine() *engine.GameEngine {
 	return engine.NewGameEngine(
 		newWebRTCRenderer(f.renderContext),

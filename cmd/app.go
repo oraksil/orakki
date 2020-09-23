@@ -12,6 +12,7 @@ func main() {
 
 	mqSvc := di.InjectMqService()
 	mqSvc.AddHandler(di.InjectSetupHandler())
+	mqSvc.AddHandler(di.InjectGamingHandler())
 
 	conf := di.InjectServiceConfig()
 	mqSvc.Run(conf.MqRpcIdentifier, false)

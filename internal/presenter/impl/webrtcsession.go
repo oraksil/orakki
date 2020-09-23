@@ -163,7 +163,7 @@ func (s *WebRTCSessionImpl) GetRenderContext() engine.RenderContext {
 	}
 
 	videoTracks := make([]*webrtc.Track, 0, len(s.videoTracks))
-	for _, track := range s.audioTracks {
+	for _, track := range s.videoTracks {
 		videoTracks = append(videoTracks, track)
 	}
 

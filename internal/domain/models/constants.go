@@ -4,6 +4,7 @@ const (
 	MsgPrepareOrakki      = "MsgPrepareOrakki"
 	MsgSetupWithNewOffer  = "MsgSetupWithNewOffer"
 	MsgRemoteIceCandidate = "MsgRemoteIceCandidate"
+	MsgStartGame          = "MsgStartGame"
 )
 
 const (

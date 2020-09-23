@@ -98,3 +98,16 @@ func newSetupHandler() *handlers.SetupHandler {
 		SetupUseCase:  setupUseCase,
 	}
 }
+
+func newGamingHandler() *handlers.GamingHandler {
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
+	var gamingUseCase *usecases.GamingUseCase
+	container.Make(&gamingUseCase)
+
+	return &handlers.GamingHandler{
+		ServiceConfig: serviceConf,
+		GamingUseCase: gamingUseCase,
+	}
+}
