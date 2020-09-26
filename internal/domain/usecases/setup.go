@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"errors"
+
 	"github.com/oraksil/orakki/internal/domain/engine"
 	"github.com/oraksil/orakki/internal/domain/models"
 	"github.com/oraksil/orakki/internal/domain/services"
@@ -26,8 +28,13 @@ func (uc *SetupUseCase) Prepare(prepare models.PrepareOrakki) (*models.Orakki, e
 }
 
 func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, error) {
+	playerId := sdp.PeerId
+	if playerId <= 0 {
+		return nil, errors.New("invalid player id")
+	}
+
 	uc.WebRTCSession.StartIceProcess(
-		sdp.PeerId,
+		playerId,
 		uc.onLocalIceCandidate,
 		uc.onIceConnectionStateChanged,
 	)
@@ -45,8 +52,13 @@ func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, er
 	return answerSdp, nil
 }
 
-func (uc *SetupUseCase) ProcessRemoteIceCandidate(remoteIce models.IceCandidate) {
-	uc.WebRTCSession.ProcessRemoteIce(remoteIce)
+func (uc *SetupUseCase) ProcessRemoteIceCandidate(remoteIce models.IceCandidate) error {
+	playerId := remoteIce.PeerId
+	if playerId <= 0 {
+		return errors.New("invalid player id")
+	}
+
+	return uc.WebRTCSession.ProcessRemoteIce(remoteIce)
 }
 
 func (uc *SetupUseCase) onLocalIceCandidate(b64EncodedIceCandidate string) {

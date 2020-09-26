@@ -185,6 +185,11 @@ func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64) *webrtc.PeerConnection {
 			{
 				URLs: []string{"stun:stun.l.google.com:19302"},
 			},
+			{
+				URLs:       []string{"turn:211.107.108.230:3478?transport=tcp"},
+				Username:   "gamz",
+				Credential: "gamz",
+			},
 		},
 	}
 
