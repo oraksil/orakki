@@ -5,7 +5,11 @@ type ServiceConfig struct {
 	MqRpcNamespace  string
 	MqRpcIdentifier string
 
-	GipanImageFramesIpcPath string
-	GipanSoundFramesIpcPath string
-	GipanKeyInputsIpcPath   string
+	GipanImageFramesIpcUri string
+	GipanSoundFramesIpcUri string
+	GipanKeyInputsIpcUri   string
+
+	TurnServerUri      string
+	TurnServerUsername string
+	TurnServerPassword string
 }

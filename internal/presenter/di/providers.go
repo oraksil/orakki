@@ -21,9 +21,13 @@ func newServiceConfig() *services.ServiceConfig {
 		MqRpcNamespace:  utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
 		MqRpcIdentifier: utils.GetStrEnv("MQRPC_IDENTIFIER", hostname),
 
-		GipanImageFramesIpcPath: utils.GetStrEnv("IPC_IMAGE_FRAMES", "/var/oraksil/ipc/images.ipc"),
-		GipanSoundFramesIpcPath: utils.GetStrEnv("IPC_SOUND_FRAMES", "/var/oraksil/ipc/sounds.ipc"),
-		GipanKeyInputsIpcPath:   utils.GetStrEnv("IPC_KEY_INPUTS", "/var/oraksil/ipc/keys.ipc"),
+		GipanImageFramesIpcUri: utils.GetStrEnv("IPC_IMAGE_FRAMES", "/var/oraksil/ipc/images.ipc"),
+		GipanSoundFramesIpcUri: utils.GetStrEnv("IPC_SOUND_FRAMES", "/var/oraksil/ipc/sounds.ipc"),
+		GipanKeyInputsIpcUri:   utils.GetStrEnv("IPC_KEY_INPUTS", "/var/oraksil/ipc/keys.ipc"),
+
+		TurnServerUri:      utils.GetStrEnv("TURN_URI", ""),
+		TurnServerUsername: utils.GetStrEnv("TURN_USERNAME", ""),
+		TurnServerPassword: utils.GetStrEnv("TURN_PASSWORD", ""),
 	}
 }
 
@@ -46,7 +50,14 @@ func newMessageService() services.MessageService {
 }
 
 func newWebRTCSession() services.WebRTCSession {
-	return impl.NewWebRTCSession()
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
+	return impl.NewWebRTCSession(
+		serviceConf.TurnServerUri,
+		serviceConf.TurnServerUsername,
+		serviceConf.TurnServerPassword,
+	)
 }
 
 func newEngineFactory() engine.EngineFactory {
