@@ -142,5 +142,10 @@ func (e *GameEngine) leavePlayer(playerId int64) {
 }
 
 func NewGameEngine(r Renderer, i InputHandler, g GipanDriver) *GameEngine {
-	return &GameEngine{renderer: r, input: i, gipan: g}
+	return &GameEngine{
+		renderer:    r,
+		input:       i,
+		gipan:       g,
+		playerSlots: make(map[int64]int),
+	}
 }

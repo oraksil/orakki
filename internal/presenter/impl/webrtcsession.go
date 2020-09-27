@@ -22,6 +22,10 @@ const (
 )
 
 type WebRTCSessionImpl struct {
+	turnUri      string
+	turnUsername string
+	turnPassword string
+
 	peers      map[int64]*webrtc.PeerConnection
 	peerStates map[int64]PeerState
 
@@ -163,7 +167,7 @@ func (s *WebRTCSessionImpl) GetRenderContext() engine.RenderContext {
 	}
 
 	videoTracks := make([]*webrtc.Track, 0, len(s.videoTracks))
-	for _, track := range s.audioTracks {
+	for _, track := range s.videoTracks {
 		videoTracks = append(videoTracks, track)
 	}
 
@@ -180,14 +184,21 @@ func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64) *webrtc.PeerConnection {
 		return peer
 	}
 
-	config := webrtc.Configuration{
-		ICEServers: []webrtc.ICEServer{
-			{
-				URLs: []string{"stun:stun.l.google.com:19302"},
-			},
+	iceServers := []webrtc.ICEServer{
+		{
+			URLs: []string{"stun:stun.l.google.com:19302"},
 		},
 	}
 
+	if s.turnUri != "" {
+		iceServers = append(iceServers, webrtc.ICEServer{
+			URLs:       []string{s.turnUri},
+			Username:   s.turnUsername,
+			Credential: s.turnPassword,
+		})
+	}
+
+	config := webrtc.Configuration{ICEServers: iceServers}
 	peer, err := webrtc.NewPeerConnection(config)
 	if err != nil {
 		return nil
@@ -246,7 +257,7 @@ func (s *WebRTCSessionImpl) getOrNewAudioTrackByPayloadType(payloadType int) *we
 	return track
 }
 
-func NewWebRTCSession() services.WebRTCSession {
+func NewWebRTCSession(turnUri, turnUsername, turnPassword string) services.WebRTCSession {
 	return &WebRTCSessionImpl{
 		peers:           make(map[int64]*webrtc.PeerConnection),
 		peerStates:      make(map[int64]PeerState),

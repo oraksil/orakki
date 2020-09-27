@@ -105,14 +105,18 @@ func (f *WebRTCGameEngineFactory) SetContexts(rc engine.RenderContext, ic engine
 	f.inputContext = ic
 }
 
+func (f *WebRTCGameEngineFactory) CanCreateEngine() bool {
+	return f.renderContext != nil && f.inputContext != nil
+}
+
 func (f *WebRTCGameEngineFactory) CreateEngine() *engine.GameEngine {
 	return engine.NewGameEngine(
 		newWebRTCRenderer(f.renderContext),
 		newWebRTCInputHandler(f.inputContext),
 		NewGipanDriver(
-			f.serviceConfig.GipanImageFramesIpcPath,
-			f.serviceConfig.GipanSoundFramesIpcPath,
-			f.serviceConfig.GipanKeyInputsIpcPath,
+			f.serviceConfig.GipanImageFramesIpcUri,
+			f.serviceConfig.GipanSoundFramesIpcUri,
+			f.serviceConfig.GipanKeyInputsIpcUri,
 		),
 	)
 }

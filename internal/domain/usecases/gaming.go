@@ -1,6 +1,9 @@
 package usecases
 
 import (
+	"fmt"
+	"time"
+
 	"github.com/oraksil/orakki/internal/domain/engine"
 )
 
@@ -12,8 +15,20 @@ type GamingUseCase struct {
 	gameEngine *engine.GameEngine
 }
 
-func (uc *GamingUseCase) StartGame(gameId string) {
-	uc.gameEngine = uc.EngineFactory.CreateEngine()
+func (uc *GamingUseCase) StartGame() {
+	go func() {
+		for {
+			fmt.Println("waiting game context is setup.")
+			time.Sleep(1 * time.Second)
+			if uc.EngineFactory.CanCreateEngine() {
+				break
+			}
+		}
 
-	uc.gameEngine.Run()
+		fmt.Println("creating game engine.")
+		uc.gameEngine = uc.EngineFactory.CreateEngine()
+
+		fmt.Println("run game engine.")
+		uc.gameEngine.Run()
+	}()
 }

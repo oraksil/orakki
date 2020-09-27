@@ -14,7 +14,9 @@ func InitContainer() {
 	container.Singleton(newWebRTCSession)
 	container.Singleton(newEngineFactory)
 	container.Singleton(newSetupUseCase)
+	container.Singleton(newGamingUseCase)
 	container.Singleton(newSetupHandler)
+	container.Singleton(newGamingHandler)
 }
 
 func InjectServiceConfig() *services.ServiceConfig {
@@ -31,6 +33,12 @@ func InjectMqService() *mqrpc.MqService {
 
 func InjectSetupHandler() *handlers.SetupHandler {
 	var handler *handlers.SetupHandler
+	container.Make(&handler)
+	return handler
+}
+
+func InjectGamingHandler() *handlers.GamingHandler {
+	var handler *handlers.GamingHandler
 	container.Make(&handler)
 	return handler
 }
