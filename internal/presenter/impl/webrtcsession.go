@@ -17,8 +17,9 @@ import (
 type PeerState int8
 
 const (
-	PEER_STATE_INIT             = 0
-	PEER_STATE_TRACK_CONFIGURED = 1
+	PEER_STATE_INIT            = 0
+	PEER_STATE_SDP_CONFIGURING = 1
+	PEER_STATE_SDP_CONFIGURED  = 2
 )
 
 type WebRTCSessionImpl struct {
@@ -35,11 +36,11 @@ type WebRTCSessionImpl struct {
 	peerInputEvents chan engine.InputEvent
 }
 
-func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
-	onLocalIceCandidate func(b64EncodedIceCandidate string),
+func (s *WebRTCSessionImpl) StartIceProcess(srcPeerId int64,
+	onLocalIceCandidate func(dstPeerId int64, b64EncodedIceCandidate string),
 	onIceConnectionStateChanged func(connectionState string)) error {
 
-	peer := s.getOrNewPeer(peerId)
+	peer := s.getOrNewPeer(srcPeerId)
 	if peer == nil {
 		return errors.New("peer connection does not exist.")
 	}
@@ -53,7 +54,7 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 		} else {
 			fmt.Println("sending final ack for local ice candidate.")
 		}
-		onLocalIceCandidate(b64EncodedIceCandidate)
+		onLocalIceCandidate(srcPeerId, b64EncodedIceCandidate)
 	})
 
 	peer.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
@@ -64,21 +65,21 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 	peer.OnDataChannel(func(d *webrtc.DataChannel) {
 		d.OnOpen(func() {
 			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerId,
+				PlayerId: srcPeerId,
 				Type:     engine.InputEventTypeSessionOpen,
 			}
 		})
 
 		d.OnClose(func() {
 			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerId,
+				PlayerId: srcPeerId,
 				Type:     engine.InputEventTypeSessionClose,
 			}
 		})
 
 		d.OnMessage(func(msg webrtc.DataChannelMessage) {
 			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerId,
+				PlayerId: srcPeerId,
 				Type:     engine.InputEventTypeKeyMessage,
 				Data:     msg.Data,
 			}
@@ -89,39 +90,44 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 }
 
 func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) {
-	peer := s.getOrNewPeer(sdp.PeerId)
+	peer := s.getOrNewPeer(sdp.SrcPeerId)
 	if peer == nil {
 		return "", errors.New("peer connection does not exist.")
 	}
 
-	if peerState, _ := s.peerStates[sdp.PeerId]; peerState == PEER_STATE_TRACK_CONFIGURED {
-		return "", errors.New("peer is already configured.")
+	if peerState, _ := s.peerStates[sdp.SrcPeerId]; peerState != PEER_STATE_INIT {
+		return "", errors.New("peer is already configured or being configured.")
 	}
+	s.peerStates[sdp.SrcPeerId] = PEER_STATE_SDP_CONFIGURING
 
 	offer := webrtc.SessionDescription{}
 	err := utils.DecodeFromB64EncodedJsonStr(sdp.SdpBase64Encoded, &offer)
 	if err != nil {
+		s.peerStates[sdp.SrcPeerId] = PEER_STATE_INIT
 		return "", err
 	}
 
 	err = s.attachMatchedMediaTracksToPeer(peer, &offer)
 	if err != nil {
+		s.peerStates[sdp.SrcPeerId] = PEER_STATE_INIT
 		return "", errors.New("failed to extract and attach matched media tracks from peer.")
 	}
-	s.peerStates[sdp.PeerId] = PEER_STATE_TRACK_CONFIGURED
 
 	err = peer.SetRemoteDescription(offer)
 	if err != nil {
+		s.peerStates[sdp.SrcPeerId] = PEER_STATE_INIT
 		return "", errors.New("failed to set remote decription")
 	}
 
 	answer, err := peer.CreateAnswer(nil)
 	if err != nil {
+		s.peerStates[sdp.SrcPeerId] = PEER_STATE_INIT
 		return "", errors.New("failed to create answer")
 	}
 
 	err = peer.SetLocalDescription(answer)
 	if err != nil {
+		s.peerStates[sdp.SrcPeerId] = PEER_STATE_INIT
 		return "", errors.New("failed to set local description")
 	}
 
@@ -130,16 +136,18 @@ func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) 
 
 	b64EncodedAnswer, err := utils.EncodeToB64EncodedJsonStr(&answer)
 	if err != nil {
+		s.peerStates[sdp.SrcPeerId] = PEER_STATE_INIT
 		return "", err
 	}
 
 	fmt.Println("sdp offer is configured, returning sdp answer.")
+	s.peerStates[sdp.SrcPeerId] = PEER_STATE_SDP_CONFIGURED
 
 	return b64EncodedAnswer, nil
 }
 
 func (s *WebRTCSessionImpl) ProcessRemoteIce(remoteIce models.IceCandidate) error {
-	peer := s.getOrNewPeer(remoteIce.PeerId)
+	peer := s.getOrNewPeer(remoteIce.SrcPeerId)
 	if peer == nil {
 		return errors.New("peer connection does not exist.")
 	}

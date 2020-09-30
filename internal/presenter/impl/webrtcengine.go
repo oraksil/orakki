@@ -96,6 +96,7 @@ func newWebRTCInputHandler(inputContext engine.InputContext) engine.InputHandler
 // WebRTCGameEngineFactory
 type WebRTCGameEngineFactory struct {
 	serviceConfig *services.ServiceConfig
+
 	renderContext engine.RenderContext
 	inputContext  engine.InputContext
 }

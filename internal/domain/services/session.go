@@ -10,8 +10,8 @@ type WebRTCSession interface {
 		sdp models.SdpInfo) (string, error)
 
 	StartIceProcess(
-		peerId int64,
-		onLocalIceCandidate func(b64EncodedIceCandidate string),
+		srcPeerId int64,
+		onLocalIceCandidate func(dstPeerId int64, b64EncodedIceCandidate string),
 		onIceStateChanged func(connectionState string)) error
 
 	ProcessRemoteIce(

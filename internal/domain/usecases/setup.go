@@ -14,12 +14,11 @@ type SetupUseCase struct {
 	WebRTCSession  services.WebRTCSession
 	EngineFactory  engine.EngineFactory
 
-	// localIceCandidatesQ chan
-	gameId int64
+	orakkiPeerId int64
 }
 
 func (uc *SetupUseCase) Prepare(prepare models.PrepareOrakki) (*models.Orakki, error) {
-	uc.gameId = prepare.GameId
+	uc.orakkiPeerId = prepare.GameId
 
 	return &models.Orakki{
 		Id:    uc.ServiceConfig.MqRpcIdentifier,
@@ -28,7 +27,7 @@ func (uc *SetupUseCase) Prepare(prepare models.PrepareOrakki) (*models.Orakki, e
 }
 
 func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, error) {
-	playerId := sdp.PeerId
+	playerId := sdp.SrcPeerId
 	if playerId <= 0 {
 		return nil, errors.New("invalid player id")
 	}
@@ -45,7 +44,8 @@ func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, er
 	}
 
 	answerSdp := &models.SdpInfo{
-		PeerId:           uc.gameId,
+		SrcPeerId:        uc.orakkiPeerId,
+		DstPeerId:        playerId,
 		SdpBase64Encoded: b64EncodedAnswer,
 	}
 
@@ -53,7 +53,7 @@ func (uc *SetupUseCase) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, er
 }
 
 func (uc *SetupUseCase) ProcessRemoteIceCandidate(remoteIce models.IceCandidate) error {
-	playerId := remoteIce.PeerId
+	playerId := remoteIce.SrcPeerId
 	if playerId <= 0 {
 		return errors.New("invalid player id")
 	}
@@ -61,9 +61,10 @@ func (uc *SetupUseCase) ProcessRemoteIceCandidate(remoteIce models.IceCandidate)
 	return uc.WebRTCSession.ProcessRemoteIce(remoteIce)
 }
 
-func (uc *SetupUseCase) onLocalIceCandidate(b64EncodedIceCandidate string) {
+func (uc *SetupUseCase) onLocalIceCandidate(dstPeerId int64, b64EncodedIceCandidate string) {
 	localIce := models.IceCandidate{
-		PeerId:           uc.gameId,
+		SrcPeerId:        uc.orakkiPeerId,
+		DstPeerId:        dstPeerId,
 		IceBase64Encoded: b64EncodedIceCandidate,
 	}
 	uc.MessageService.SendToAny(models.MsgRemoteIceCandidate, localIce)

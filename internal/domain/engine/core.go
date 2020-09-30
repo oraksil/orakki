@@ -1,5 +1,9 @@
 package engine
 
+import (
+	"github.com/oraksil/orakki/internal/domain/models"
+)
+
 type RenderContext interface {
 	WriteAudioFrame(buf []byte) error
 	WriteVideoFrame(buf []byte) error
@@ -37,22 +41,21 @@ type GipanDriver interface {
 	WriteKeyInput(playerSlotNo int, key []byte) error
 }
 
-const (
-	maxPlayerSlots      = 4
-	initialPlayerSlotNo = 0
-)
+const initialPlayerSlotNo = 0
 
 type GameEngine struct {
-	renderer Renderer
-	input    InputHandler
-	gipan    GipanDriver
+	renderer       Renderer
+	input          InputHandler
+	gipan          GipanDriver
+	messageService func(msgType string, payload interface{})
+
+	gameInfo    *models.GameInfo
+	playerSlots map[int64]int
 
 	running bool
-
-	playerSlots map[int64]int
 }
 
-func (e *GameEngine) Run() {
+func (e *GameEngine) Run(gameInfo *models.GameInfo, msgService func(string, interface{})) {
 	// gipan -> renderer
 	go e.handleAudioFrame()
 	go e.handleVideoFrame()
@@ -60,6 +63,8 @@ func (e *GameEngine) Run() {
 	// input -> gipan
 	go e.handleInputEvent()
 
+	e.messageService = msgService
+	e.gameInfo = gameInfo
 	e.running = true
 }
 
@@ -118,7 +123,8 @@ func isSlotOccupied(slotNumbers []int, slotNo int) bool {
 
 func (e *GameEngine) joinPlayer(playerId int64) {
 	numOccupiedSlots := len(e.playerSlots)
-	if numOccupiedSlots >= maxPlayerSlots {
+	if numOccupiedSlots >= e.gameInfo.MaxPlayers {
+		e.notifyPlayerJoinFailed(playerId)
 		return
 	}
 
@@ -127,18 +133,43 @@ func (e *GameEngine) joinPlayer(playerId int64) {
 		occupiedSlots = append(occupiedSlots, slotNo)
 	}
 
-	for slotNo := initialPlayerSlotNo; slotNo < maxPlayerSlots; slotNo++ {
+	for slotNo := initialPlayerSlotNo; slotNo < e.gameInfo.MaxPlayers; slotNo++ {
 		if !isSlotOccupied(occupiedSlots, slotNo) {
 			e.playerSlots[playerId] = slotNo
-			break
+			e.notifyPlayerJoined(playerId)
+			return
 		}
 	}
+
+	e.notifyPlayerJoinFailed(playerId)
 }
 
 func (e *GameEngine) leavePlayer(playerId int64) {
 	if _, ok := e.playerSlots[playerId]; ok {
 		delete(e.playerSlots, playerId)
+		e.notifyPlayerLeft(playerId)
 	}
+}
+
+func (e *GameEngine) notifyPlayerJoined(playerId int64) {
+	e.messageService(models.MsgPlayerJoined, &models.PlayerParticipation{
+		GameId:   e.gameInfo.GameId,
+		PlayerId: playerId,
+	})
+}
+
+func (e *GameEngine) notifyPlayerJoinFailed(playerId int64) {
+	e.messageService(models.MsgPlayerJoinFailed, &models.PlayerParticipation{
+		GameId:   e.gameInfo.GameId,
+		PlayerId: playerId,
+	})
+}
+
+func (e *GameEngine) notifyPlayerLeft(playerId int64) {
+	e.messageService(models.MsgPlayerLeft, &models.PlayerParticipation{
+		GameId:   e.gameInfo.GameId,
+		PlayerId: playerId,
+	})
 }
 
 func NewGameEngine(r Renderer, i InputHandler, g GipanDriver) *GameEngine {

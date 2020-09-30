@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+
 	"github.com/oraksil/orakki/internal/domain/models"
 	"github.com/oraksil/orakki/internal/domain/services"
 	"github.com/oraksil/orakki/internal/domain/usecases"
@@ -13,7 +15,10 @@ type GamingHandler struct {
 }
 
 func (h *GamingHandler) handleStartGame(ctx *mqrpc.Context) interface{} {
-	h.GamingUseCase.StartGame()
+	var gameInfo models.GameInfo
+	json.Unmarshal(ctx.GetMessage().Payload, &gameInfo)
+
+	h.GamingUseCase.StartGame(&gameInfo)
 
 	return nil
 }
