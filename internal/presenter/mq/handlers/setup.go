@@ -27,7 +27,7 @@ func (h *SetupHandler) handleSetupWithNewOffer(ctx *mqrpc.Context) interface{} {
 	var sdpOffer models.SdpInfo
 	json.Unmarshal(ctx.GetMessage().Payload, &sdpOffer)
 
-	sdpAnswer, _ := h.SetupUseCase.ProcessNewOffer(sdpOffer)
+	sdpAnswer, _ := h.SetupUseCase.ProcessSdpExchange(sdpOffer)
 
 	return sdpAnswer
 }
