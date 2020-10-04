@@ -39,7 +39,7 @@ type WebRTCSessionImpl struct {
 func (s *WebRTCSessionImpl) SetupIceHandlers(
 	peerInfo models.PeerInfo,
 	onLocalIceCandidate func(iceCandidate models.IceCandidate),
-	onIceConnectionStateChanged func(connectionState string)) error {
+	onIceConnectionStateChanged func(peerInfo models.PeerInfo, connectionState string)) error {
 
 	peer := s.getOrNewPeer(peerInfo.PlayerId, true)
 	if peer == nil {
@@ -63,7 +63,7 @@ func (s *WebRTCSessionImpl) SetupIceHandlers(
 
 	peer.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		fmt.Printf("ice connection state changed: %s.\n", connectionState.String())
-		onIceConnectionStateChanged(connectionState.String())
+		onIceConnectionStateChanged(peerInfo, connectionState.String())
 	})
 
 	peer.OnDataChannel(func(d *webrtc.DataChannel) {
@@ -82,10 +82,20 @@ func (s *WebRTCSessionImpl) SetupIceHandlers(
 		})
 
 		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerInfo.PlayerId,
-				Type:     engine.InputEventTypeKeyMessage,
-				Data:     msg.Data,
+			keyword := string(msg.Data[:])
+			switch keyword {
+			case "ping":
+				s.peerInputEvents <- engine.InputEvent{
+					PlayerId: peerInfo.PlayerId,
+					Type:     engine.InputEventTypeHealthCheck,
+					Data:     msg.Data,
+				}
+			default:
+				s.peerInputEvents <- engine.InputEvent{
+					PlayerId: peerInfo.PlayerId,
+					Type:     engine.InputEventTypeKeyMessage,
+					Data:     msg.Data,
+				}
 			}
 		})
 	})
@@ -195,6 +205,10 @@ func (s *WebRTCSessionImpl) GetRenderContext() engine.RenderContext {
 
 func (s *WebRTCSessionImpl) GetInputContext() engine.InputContext {
 	return newWebRTCInputContext(s.peerInputEvents)
+}
+
+func (s *WebRTCSessionImpl) GetSessionContext() engine.SessionContext {
+	return newWebRTCSessionContext(s.peers, s.peerStates)
 }
 
 func (s *WebRTCSessionImpl) releasePeer(peer *webrtc.PeerConnection, peerId int64) {

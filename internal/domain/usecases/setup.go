@@ -57,10 +57,11 @@ func (uc *SetupUseCase) onLocalIceCandidate(iceCandidate models.IceCandidate) {
 	uc.MessageService.SendToAny(models.MsgRemoteIceCandidate, iceCandidate)
 }
 
-func (uc *SetupUseCase) onIceConnectionStateChanged(connectionState string) {
+func (uc *SetupUseCase) onIceConnectionStateChanged(peerInfo models.PeerInfo, connectionState string) {
 	if connectionState == "connected" {
 		rc := uc.WebRTCSession.GetRenderContext()
 		ic := uc.WebRTCSession.GetInputContext()
-		uc.EngineFactory.SetContexts(rc, ic)
+		sc := uc.WebRTCSession.GetSessionContext()
+		uc.EngineFactory.SetContexts(rc, ic, sc)
 	}
 }

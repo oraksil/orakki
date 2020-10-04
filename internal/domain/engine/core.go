@@ -1,23 +1,16 @@
 package engine
 
 import (
+	"time"
+
 	"github.com/oraksil/orakki/internal/domain/models"
 )
-
-type RenderContext interface {
-	WriteAudioFrame(buf []byte) error
-	WriteVideoFrame(buf []byte) error
-}
-
-type Renderer interface {
-	WriteAudioFrame(buf []byte) error
-	WriteVideoFrame(buf []byte) error
-}
 
 const (
 	InputEventTypeSessionOpen  = 1
 	InputEventTypeSessionClose = 2
-	InputEventTypeKeyMessage   = 3
+	InputEventTypeHealthCheck  = 3
+	InputEventTypeKeyMessage   = 4
 )
 
 type InputEvent struct {
@@ -26,12 +19,24 @@ type InputEvent struct {
 	Data     []byte
 }
 
+type RenderContext interface {
+	WriteAudioFrame(buf []byte) error
+	WriteVideoFrame(buf []byte) error
+}
+
 type InputContext interface {
 	FetchInput() (InputEvent, error)
 }
 
-type InputHandler interface {
+type SessionContext interface {
+	CloseSession(playerId int64) error
+}
+
+type FrontInterface interface {
+	WriteAudioFrame(buf []byte) error
+	WriteVideoFrame(buf []byte) error
 	FetchInput() (InputEvent, error)
+	CloseSession(playerId int64) error
 }
 
 type GipanDriver interface {
@@ -44,13 +49,13 @@ type GipanDriver interface {
 const initialPlayerSlotNo = 0
 
 type GameEngine struct {
-	renderer       Renderer
-	input          InputHandler
+	front          FrontInterface
 	gipan          GipanDriver
 	messageService func(msgType string, payload interface{})
 
-	gameInfo    *models.GameInfo
-	playerSlots map[int64]int
+	gameInfo        *models.GameInfo
+	playerSlots     map[int64]int   // playerId: slotNo
+	playerLastPings map[int64]int64 // playerId: unix time in secs
 
 	running bool
 }
@@ -62,6 +67,9 @@ func (e *GameEngine) Run(gameInfo *models.GameInfo, msgService func(string, inte
 
 	// input -> gipan
 	go e.handleInputEvent()
+
+	// kick unhealthy players
+	go e.handleUnhealthyPlayers()
 
 	e.messageService = msgService
 	e.gameInfo = gameInfo
@@ -75,7 +83,7 @@ func (e *GameEngine) handleAudioFrame() {
 			continue
 		}
 
-		e.renderer.WriteAudioFrame(buf)
+		e.front.WriteAudioFrame(buf)
 	}
 }
 
@@ -86,13 +94,13 @@ func (e *GameEngine) handleVideoFrame() {
 			continue
 		}
 
-		e.renderer.WriteVideoFrame(buf)
+		e.front.WriteVideoFrame(buf)
 	}
 }
 
 func (e *GameEngine) handleInputEvent() {
 	for {
-		in, err := e.input.FetchInput()
+		in, err := e.front.FetchInput()
 		if err != nil {
 			continue
 		}
@@ -104,10 +112,37 @@ func (e *GameEngine) handleInputEvent() {
 		case InputEventTypeSessionClose:
 			e.leavePlayer(in.PlayerId)
 
+		case InputEventTypeHealthCheck:
+			e.checkPlayerLiveness(in.PlayerId)
+
 		case InputEventTypeKeyMessage:
 			if slotNo, ok := e.playerSlots[in.PlayerId]; ok {
 				e.gipan.WriteKeyInput(slotNo, in.Data)
 			}
+		}
+	}
+}
+
+func (e *GameEngine) handleUnhealthyPlayers() {
+	const unhealthyTimeout int64 = 10 // in seconds
+	const checkInterval = 5 * time.Second
+
+	kickUnhealthyPlayers := func() {
+		now := time.Now().Unix()
+		for playerId, lastPing := range e.playerLastPings {
+			if now-lastPing > unhealthyTimeout {
+				// kick player by closing channel
+				e.front.CloseSession(playerId)
+				e.leavePlayer(playerId)
+			}
+		}
+	}
+
+	ticker := time.NewTicker(checkInterval)
+	for {
+		select {
+		case <-ticker.C:
+			kickUnhealthyPlayers()
 		}
 	}
 }
@@ -121,10 +156,14 @@ func isSlotOccupied(slotNumbers []int, slotNo int) bool {
 	return false
 }
 
+func (e *GameEngine) checkPlayerLiveness(playerId int64) {
+	e.playerLastPings[playerId] = time.Now().Unix()
+}
+
 func (e *GameEngine) joinPlayer(playerId int64) {
 	numOccupiedSlots := len(e.playerSlots)
 	if numOccupiedSlots >= e.gameInfo.MaxPlayers {
-		e.notifyPlayerJoinFailed(playerId)
+		e.notifyPlayerParticipation(models.MsgPlayerJoinFailed, playerId)
 		return
 	}
 
@@ -136,47 +175,35 @@ func (e *GameEngine) joinPlayer(playerId int64) {
 	for slotNo := initialPlayerSlotNo; slotNo < e.gameInfo.MaxPlayers; slotNo++ {
 		if !isSlotOccupied(occupiedSlots, slotNo) {
 			e.playerSlots[playerId] = slotNo
-			e.notifyPlayerJoined(playerId)
+			e.playerLastPings[playerId] = time.Now().Unix()
+			e.notifyPlayerParticipation(models.MsgPlayerJoined, playerId)
 			return
 		}
 	}
 
-	e.notifyPlayerJoinFailed(playerId)
+	e.notifyPlayerParticipation(models.MsgPlayerJoinFailed, playerId)
 }
 
 func (e *GameEngine) leavePlayer(playerId int64) {
 	if _, ok := e.playerSlots[playerId]; ok {
 		delete(e.playerSlots, playerId)
-		e.notifyPlayerLeft(playerId)
+		delete(e.playerLastPings, playerId)
+		e.notifyPlayerParticipation(models.MsgPlayerLeft, playerId)
 	}
 }
 
-func (e *GameEngine) notifyPlayerJoined(playerId int64) {
-	e.messageService(models.MsgPlayerJoined, &models.PlayerParticipation{
+func (e *GameEngine) notifyPlayerParticipation(msgType string, playerId int64) {
+	e.messageService(msgType, &models.PlayerParticipation{
 		GameId:   e.gameInfo.GameId,
 		PlayerId: playerId,
 	})
 }
 
-func (e *GameEngine) notifyPlayerJoinFailed(playerId int64) {
-	e.messageService(models.MsgPlayerJoinFailed, &models.PlayerParticipation{
-		GameId:   e.gameInfo.GameId,
-		PlayerId: playerId,
-	})
-}
-
-func (e *GameEngine) notifyPlayerLeft(playerId int64) {
-	e.messageService(models.MsgPlayerLeft, &models.PlayerParticipation{
-		GameId:   e.gameInfo.GameId,
-		PlayerId: playerId,
-	})
-}
-
-func NewGameEngine(r Renderer, i InputHandler, g GipanDriver) *GameEngine {
+func NewGameEngine(f FrontInterface, g GipanDriver) *GameEngine {
 	return &GameEngine{
-		renderer:    r,
-		input:       i,
-		gipan:       g,
-		playerSlots: make(map[int64]int),
+		front:           f,
+		gipan:           g,
+		playerSlots:     make(map[int64]int),
+		playerLastPings: make(map[int64]int64),
 	}
 }

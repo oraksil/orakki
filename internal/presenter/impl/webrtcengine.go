@@ -1,10 +1,13 @@
 package impl
 
 import (
+	"fmt"
+
 	"github.com/oraksil/orakki/internal/domain/engine"
 	"github.com/oraksil/orakki/internal/domain/services"
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
+	"github.com/pkg/errors"
 )
 
 // WebRTCRenderContext
@@ -42,26 +45,6 @@ func newWebRTCRenderContext(audioTracks, videoTracks []*webrtc.Track) engine.Ren
 	}
 }
 
-// WebRTCRenderer
-type WebRTCRenderer struct {
-	renderContext engine.RenderContext
-}
-
-func (r *WebRTCRenderer) WriteAudioFrame(buf []byte) error {
-	// direct write to webrtc track
-	return r.renderContext.WriteAudioFrame(buf)
-}
-
-func (r *WebRTCRenderer) WriteVideoFrame(buf []byte) error {
-	return r.renderContext.WriteVideoFrame(buf)
-}
-
-func newWebRTCRenderer(rc engine.RenderContext) engine.Renderer {
-	return &WebRTCRenderer{
-		renderContext: rc,
-	}
-}
-
 // WebRTCInputContext
 type WebRTCInputContext struct {
 	inputEvents chan engine.InputEvent
@@ -78,18 +61,61 @@ func newWebRTCInputContext(inputEvents chan engine.InputEvent) engine.InputConte
 	}
 }
 
-// WebRTCInputHandler
-type WebRTCInputHandler struct {
-	inputContext engine.InputContext
+// WebRTCSessionContext
+type WebRTCSessionContext struct {
+	peers      map[int64]*webrtc.PeerConnection
+	peerStates map[int64]PeerState
 }
 
-func (i *WebRTCInputHandler) FetchInput() (engine.InputEvent, error) {
-	return i.inputContext.FetchInput()
+func (sc *WebRTCSessionContext) CloseSession(playerId int64) error {
+	peer, ok := sc.peers[playerId]
+	if !ok {
+		return errors.New(fmt.Sprintf("peer connection not found for %d", playerId))
+	}
+
+	return peer.Close()
 }
 
-func newWebRTCInputHandler(inputContext engine.InputContext) engine.InputHandler {
-	return &WebRTCInputHandler{
-		inputContext: inputContext,
+func newWebRTCSessionContext(
+	peers map[int64]*webrtc.PeerConnection, peerStates map[int64]PeerState) engine.SessionContext {
+
+	return &WebRTCSessionContext{
+		peers:      peers,
+		peerStates: peerStates,
+	}
+}
+
+// WebRTCFrontInterface (Facade of rendering, input handling, connection management)
+type WebRTCFrontInterface struct {
+	renderContext  engine.RenderContext
+	inputContext   engine.InputContext
+	sessionContext engine.SessionContext
+}
+
+func (f *WebRTCFrontInterface) WriteAudioFrame(buf []byte) error {
+	// direct write to webrtc track
+	return f.renderContext.WriteAudioFrame(buf)
+}
+
+func (f *WebRTCFrontInterface) WriteVideoFrame(buf []byte) error {
+	return f.renderContext.WriteVideoFrame(buf)
+}
+
+func (f *WebRTCFrontInterface) FetchInput() (engine.InputEvent, error) {
+	return f.inputContext.FetchInput()
+}
+
+func (f *WebRTCFrontInterface) CloseSession(playerId int64) error {
+	return f.sessionContext.CloseSession(playerId)
+}
+
+func newWebRTCFrontInterface(
+	rc engine.RenderContext, ic engine.InputContext, sc engine.SessionContext) engine.FrontInterface {
+
+	return &WebRTCFrontInterface{
+		renderContext:  rc,
+		inputContext:   ic,
+		sessionContext: sc,
 	}
 }
 
@@ -97,23 +123,26 @@ func newWebRTCInputHandler(inputContext engine.InputContext) engine.InputHandler
 type WebRTCGameEngineFactory struct {
 	serviceConfig *services.ServiceConfig
 
-	renderContext engine.RenderContext
-	inputContext  engine.InputContext
+	renderContext  engine.RenderContext
+	inputContext   engine.InputContext
+	sessionContext engine.SessionContext
 }
 
-func (f *WebRTCGameEngineFactory) SetContexts(rc engine.RenderContext, ic engine.InputContext) {
+func (f *WebRTCGameEngineFactory) SetContexts(
+	rc engine.RenderContext, ic engine.InputContext, sc engine.SessionContext) {
+
 	f.renderContext = rc
 	f.inputContext = ic
+	f.sessionContext = sc
 }
 
 func (f *WebRTCGameEngineFactory) CanCreateEngine() bool {
-	return f.renderContext != nil && f.inputContext != nil
+	return f.renderContext != nil && f.inputContext != nil && f.sessionContext != nil
 }
 
 func (f *WebRTCGameEngineFactory) CreateEngine() *engine.GameEngine {
 	return engine.NewGameEngine(
-		newWebRTCRenderer(f.renderContext),
-		newWebRTCInputHandler(f.inputContext),
+		newWebRTCFrontInterface(f.renderContext, f.inputContext, f.sessionContext),
 		NewGipanDriver(
 			f.serviceConfig.GipanImageFramesIpcUri,
 			f.serviceConfig.GipanSoundFramesIpcUri,

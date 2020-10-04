@@ -9,10 +9,11 @@ type WebRTCSession interface {
 	SetupIceHandlers(
 		peerInfo models.PeerInfo,
 		onLocalIceCandidate func(iceCandidate models.IceCandidate),
-		onIceStateChanged func(connectionState string)) error
+		onIceStateChanged func(peerInfo models.PeerInfo, connectionState string)) error
 	ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, error)
 	ProcessRemoteIce(iceCandidate models.IceCandidate) error
 
 	GetRenderContext() engine.RenderContext
 	GetInputContext() engine.InputContext
+	GetSessionContext() engine.SessionContext
 }
