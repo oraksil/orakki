@@ -16,6 +16,7 @@ require (
 	github.com/op/go-nanomsg v0.0.0-20160608204431-48d7bb6353de
 	github.com/pion/quic v0.1.4 // indirect
 	github.com/pion/webrtc/v2 v2.2.26
+	github.com/pkg/errors v0.9.1
 	github.com/sangwonl/mqrpc v0.0.14
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/net v0.0.0-20200904194848-62affa334b73 // indirect

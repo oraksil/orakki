@@ -5,6 +5,9 @@ const (
 	MsgSetupWithNewOffer  = "MsgSetupWithNewOffer"
 	MsgRemoteIceCandidate = "MsgRemoteIceCandidate"
 	MsgStartGame          = "MsgStartGame"
+	MsgPlayerJoined       = "MsgPlayerJoined"
+	MsgPlayerJoinFailed   = "MsgPlayerJoinFailed"
+	MsgPlayerLeft         = "MsgPlayerLeft"
 )
 
 const (

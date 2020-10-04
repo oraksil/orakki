@@ -4,17 +4,34 @@ type PrepareOrakki struct {
 	GameId int64
 }
 
+type GameInfo struct {
+	GameId     int64
+	MaxPlayers int
+}
+
+type PlayerParticipation struct {
+	GameId   int64
+	PlayerId int64
+}
+
 type Orakki struct {
 	Id    string
 	State int
 }
 
+type PeerInfo struct {
+	Token    string
+	GameId   int64
+	PlayerId int64
+}
+
 type SdpInfo struct {
-	PeerId           int64 // game-id or player-id
+	Peer             PeerInfo
 	SdpBase64Encoded string
 }
 
 type IceCandidate struct {
-	PeerId           int64 // game-id or player-id
+	Peer             PeerInfo
 	IceBase64Encoded string
+	Seq              int64
 }

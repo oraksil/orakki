@@ -89,11 +89,15 @@ func newSetupUseCase() *usecases.SetupUseCase {
 }
 
 func newGamingUseCase() *usecases.GamingUseCase {
+	var msgService services.MessageService
+	container.Make(&msgService)
+
 	var engineFactory engine.EngineFactory
 	container.Make(&engineFactory)
 
 	return &usecases.GamingUseCase{
-		EngineFactory: engineFactory,
+		MessageService: msgService,
+		EngineFactory:  engineFactory,
 	}
 }
 

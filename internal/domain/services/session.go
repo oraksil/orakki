@@ -6,17 +6,14 @@ import (
 )
 
 type WebRTCSession interface {
-	ProcessNewOffer(
-		sdp models.SdpInfo) (string, error)
-
-	StartIceProcess(
-		peerId int64,
-		onLocalIceCandidate func(b64EncodedIceCandidate string),
-		onIceStateChanged func(connectionState string)) error
-
-	ProcessRemoteIce(
-		iceCandidate models.IceCandidate) error
+	SetupIceHandlers(
+		peerInfo models.PeerInfo,
+		onLocalIceCandidate func(iceCandidate models.IceCandidate),
+		onIceStateChanged func(peerInfo models.PeerInfo, connectionState string)) error
+	ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, error)
+	ProcessRemoteIce(iceCandidate models.IceCandidate) error
 
 	GetRenderContext() engine.RenderContext
 	GetInputContext() engine.InputContext
+	GetSessionContext() engine.SessionContext
 }

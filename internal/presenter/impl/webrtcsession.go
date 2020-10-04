@@ -17,8 +17,9 @@ import (
 type PeerState int8
 
 const (
-	PEER_STATE_INIT             = 0
-	PEER_STATE_TRACK_CONFIGURED = 1
+	PEER_STATE_INIT            = 0
+	PEER_STATE_SDP_CONFIGURING = 1
+	PEER_STATE_SDP_CONFIGURED  = 2
 )
 
 type WebRTCSessionImpl struct {
@@ -35,11 +36,12 @@ type WebRTCSessionImpl struct {
 	peerInputEvents chan engine.InputEvent
 }
 
-func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
-	onLocalIceCandidate func(b64EncodedIceCandidate string),
-	onIceConnectionStateChanged func(connectionState string)) error {
+func (s *WebRTCSessionImpl) SetupIceHandlers(
+	peerInfo models.PeerInfo,
+	onLocalIceCandidate func(iceCandidate models.IceCandidate),
+	onIceConnectionStateChanged func(peerInfo models.PeerInfo, connectionState string)) error {
 
-	peer := s.getOrNewPeer(peerId)
+	peer := s.getOrNewPeer(peerInfo.PlayerId, true)
 	if peer == nil {
 		return errors.New("peer connection does not exist.")
 	}
@@ -53,34 +55,47 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 		} else {
 			fmt.Println("sending final ack for local ice candidate.")
 		}
-		onLocalIceCandidate(b64EncodedIceCandidate)
+		onLocalIceCandidate(models.IceCandidate{
+			Peer:             peerInfo,
+			IceBase64Encoded: b64EncodedIceCandidate,
+		})
 	})
 
 	peer.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		fmt.Printf("ice connection state changed: %s.\n", connectionState.String())
-		onIceConnectionStateChanged(connectionState.String())
+		onIceConnectionStateChanged(peerInfo, connectionState.String())
 	})
 
 	peer.OnDataChannel(func(d *webrtc.DataChannel) {
 		d.OnOpen(func() {
 			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerId,
+				PlayerId: peerInfo.PlayerId,
 				Type:     engine.InputEventTypeSessionOpen,
 			}
 		})
 
 		d.OnClose(func() {
 			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerId,
+				PlayerId: peerInfo.PlayerId,
 				Type:     engine.InputEventTypeSessionClose,
 			}
 		})
 
 		d.OnMessage(func(msg webrtc.DataChannelMessage) {
-			s.peerInputEvents <- engine.InputEvent{
-				PlayerId: peerId,
-				Type:     engine.InputEventTypeKeyMessage,
-				Data:     msg.Data,
+			keyword := string(msg.Data[:])
+			switch keyword {
+			case "ping":
+				s.peerInputEvents <- engine.InputEvent{
+					PlayerId: peerInfo.PlayerId,
+					Type:     engine.InputEventTypeHealthCheck,
+					Data:     msg.Data,
+				}
+			default:
+				s.peerInputEvents <- engine.InputEvent{
+					PlayerId: peerInfo.PlayerId,
+					Type:     engine.InputEventTypeKeyMessage,
+					Data:     msg.Data,
+				}
 			}
 		})
 	})
@@ -88,41 +103,50 @@ func (s *WebRTCSessionImpl) StartIceProcess(peerId int64,
 	return nil
 }
 
-func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) {
-	peer := s.getOrNewPeer(sdp.PeerId)
-	if peer == nil {
-		return "", errors.New("peer connection does not exist.")
+func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (*models.SdpInfo, error) {
+	resetPeerState := func() {
+		s.peerStates[sdp.Peer.PlayerId] = PEER_STATE_INIT
 	}
 
-	if peerState, _ := s.peerStates[sdp.PeerId]; peerState == PEER_STATE_TRACK_CONFIGURED {
-		return "", errors.New("peer is already configured.")
+	peer := s.getOrNewPeer(sdp.Peer.PlayerId, false)
+	if peer == nil {
+		return nil, errors.New("peer connection does not exist.")
 	}
+
+	if peerState, _ := s.peerStates[sdp.Peer.PlayerId]; peerState != PEER_STATE_INIT {
+		return nil, errors.New("peer is already configured or being configured.")
+	}
+	s.peerStates[sdp.Peer.PlayerId] = PEER_STATE_SDP_CONFIGURING
 
 	offer := webrtc.SessionDescription{}
 	err := utils.DecodeFromB64EncodedJsonStr(sdp.SdpBase64Encoded, &offer)
 	if err != nil {
-		return "", err
+		resetPeerState()
+		return nil, err
 	}
 
 	err = s.attachMatchedMediaTracksToPeer(peer, &offer)
 	if err != nil {
-		return "", errors.New("failed to extract and attach matched media tracks from peer.")
+		resetPeerState()
+		return nil, errors.New("failed to extract and attach matched media tracks from peer.")
 	}
-	s.peerStates[sdp.PeerId] = PEER_STATE_TRACK_CONFIGURED
 
 	err = peer.SetRemoteDescription(offer)
 	if err != nil {
-		return "", errors.New("failed to set remote decription")
+		resetPeerState()
+		return nil, errors.New("failed to set remote decription")
 	}
 
 	answer, err := peer.CreateAnswer(nil)
 	if err != nil {
-		return "", errors.New("failed to create answer")
+		resetPeerState()
+		return nil, errors.New("failed to create answer")
 	}
 
 	err = peer.SetLocalDescription(answer)
 	if err != nil {
-		return "", errors.New("failed to set local description")
+		resetPeerState()
+		return nil, errors.New("failed to set local description")
 	}
 
 	// for firefox
@@ -130,16 +154,21 @@ func (s *WebRTCSessionImpl) ProcessNewOffer(sdp models.SdpInfo) (string, error) 
 
 	b64EncodedAnswer, err := utils.EncodeToB64EncodedJsonStr(&answer)
 	if err != nil {
-		return "", err
+		resetPeerState()
+		return nil, err
 	}
 
 	fmt.Println("sdp offer is configured, returning sdp answer.")
+	s.peerStates[sdp.Peer.PlayerId] = PEER_STATE_SDP_CONFIGURED
 
-	return b64EncodedAnswer, nil
+	return &models.SdpInfo{
+		Peer:             sdp.Peer,
+		SdpBase64Encoded: b64EncodedAnswer,
+	}, nil
 }
 
 func (s *WebRTCSessionImpl) ProcessRemoteIce(remoteIce models.IceCandidate) error {
-	peer := s.getOrNewPeer(remoteIce.PeerId)
+	peer := s.getOrNewPeer(remoteIce.Peer.PlayerId, false)
 	if peer == nil {
 		return errors.New("peer connection does not exist.")
 	}
@@ -178,10 +207,25 @@ func (s *WebRTCSessionImpl) GetInputContext() engine.InputContext {
 	return newWebRTCInputContext(s.peerInputEvents)
 }
 
-func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64) *webrtc.PeerConnection {
+func (s *WebRTCSessionImpl) GetSessionContext() engine.SessionContext {
+	return newWebRTCSessionContext(s.peers, s.peerStates)
+}
+
+func (s *WebRTCSessionImpl) releasePeer(peer *webrtc.PeerConnection, peerId int64) {
+	peer.Close()
+
+	delete(s.peers, peerId)
+	delete(s.peerStates, peerId)
+}
+
+func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64, new bool) *webrtc.PeerConnection {
 	peer, ok := s.peers[peerId]
 	if ok {
-		return peer
+		if !new {
+			return peer
+		}
+
+		s.releasePeer(peer, peerId)
 	}
 
 	iceServers := []webrtc.ICEServer{
