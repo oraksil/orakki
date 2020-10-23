@@ -124,7 +124,7 @@ func (e *GameEngine) handleInputEvent() {
 }
 
 func (e *GameEngine) handleUnhealthyPlayers() {
-	const unhealthyTimeout int64 = 10 // in seconds
+	const unhealthyTimeout int64 = 20 // in seconds
 	const checkInterval = 5 * time.Second
 
 	kickUnhealthyPlayers := func() {
