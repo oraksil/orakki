@@ -57,7 +57,14 @@ type GameEngine struct {
 	playerSlots     map[int64]int   // playerId: slotNo
 	playerLastPings map[int64]int64 // playerId: unix time in secs
 
-	running bool
+	poisonPill      bool
+	healthCheckQuit chan bool
+}
+
+func (e *GameEngine) Reset() {
+	e.poisonPill = true
+	e.healthCheckQuit <- true
+	close(e.healthCheckQuit)
 }
 
 func (e *GameEngine) Run(gameInfo *models.GameInfo, msgService func(string, interface{})) {
@@ -73,7 +80,8 @@ func (e *GameEngine) Run(gameInfo *models.GameInfo, msgService func(string, inte
 
 	e.messageService = msgService
 	e.gameInfo = gameInfo
-	e.running = true
+	e.poisonPill = false
+	e.healthCheckQuit = make(chan bool)
 }
 
 func (e *GameEngine) handleAudioFrame() {
@@ -84,6 +92,10 @@ func (e *GameEngine) handleAudioFrame() {
 		}
 
 		e.front.WriteAudioFrame(buf)
+
+		if e.poisonPill {
+			break
+		}
 	}
 }
 
@@ -95,6 +107,10 @@ func (e *GameEngine) handleVideoFrame() {
 		}
 
 		e.front.WriteVideoFrame(buf)
+
+		if e.poisonPill {
+			break
+		}
 	}
 }
 
@@ -120,6 +136,10 @@ func (e *GameEngine) handleInputEvent() {
 				e.gipan.WriteKeyInput(slotNo, in.Data)
 			}
 		}
+
+		if e.poisonPill {
+			break
+		}
 	}
 }
 
@@ -143,6 +163,9 @@ func (e *GameEngine) handleUnhealthyPlayers() {
 		select {
 		case <-ticker.C:
 			kickUnhealthyPlayers()
+		case <-e.healthCheckQuit:
+			ticker.Stop()
+			return
 		}
 	}
 }

@@ -32,6 +32,11 @@ func (uc *GamingUseCase) StartGame(gameInfo *models.GameInfo) {
 			}
 		}
 
+		if uc.gameEngine != nil {
+			fmt.Println("resetting game engine.")
+			uc.gameEngine.Reset()
+		}
+
 		fmt.Println("creating game engine.")
 		uc.gameEngine = uc.EngineFactory.CreateEngine()
 
