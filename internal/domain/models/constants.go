@@ -1,6 +1,11 @@
 package models
 
 const (
+	PackStatusPreparing = iota
+	PackStatusReady
+)
+
+const (
 	MsgPrepareOrakki      = "MsgPrepareOrakki"
 	MsgSetupWithNewOffer  = "MsgSetupWithNewOffer"
 	MsgRemoteIceCandidate = "MsgRemoteIceCandidate"
