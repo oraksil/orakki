@@ -256,19 +256,25 @@ func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64, new bool) *webrtc.PeerCon
 func (s *WebRTCSessionImpl) attachMatchedMediaTracksToPeer(peer *webrtc.PeerConnection, offer *webrtc.SessionDescription) error {
 	re := regexp.MustCompile(`a=rtpmap:([0-9]+) H264/90000`)
 	matched := re.FindStringSubmatch(offer.SDP)
+	if matched == nil {
+		return errors.New("no matched video track info from offer.")
+	}
+
 	payloadType, _ := strconv.ParseInt(matched[1], 10, 8)
 	videoTrack := s.getOrNewVideoTrackByPayloadType(int(payloadType))
-
-	re = regexp.MustCompile(`a=rtpmap:([0-9]+) opus/48000/2`)
-	matched = re.FindStringSubmatch(offer.SDP)
-	payloadType, _ = strconv.ParseInt(matched[1], 10, 8)
-	audioTrack := s.getOrNewAudioTrackByPayloadType(int(payloadType))
-
 	_, err := peer.AddTrack(videoTrack)
 	if err != nil {
 		return err
 	}
 
+	re = regexp.MustCompile(`a=rtpmap:([0-9]+) opus/48000/2`)
+	matched = re.FindStringSubmatch(offer.SDP)
+	if matched == nil {
+		return errors.New("no matched audio track info from offer.")
+	}
+
+	payloadType, _ = strconv.ParseInt(matched[1], 10, 8)
+	audioTrack := s.getOrNewAudioTrackByPayloadType(int(payloadType))
 	_, err = peer.AddTrack(audioTrack)
 	if err != nil {
 		return err
