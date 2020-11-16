@@ -21,9 +21,9 @@ func newServiceConfig() *services.ServiceConfig {
 		MqRpcNamespace:  utils.GetStrEnv("MQRPC_NAMESPACE", "oraksil"),
 		MqRpcIdentifier: utils.GetStrEnv("MQRPC_IDENTIFIER", hostname),
 
-		GipanImageFramesIpcUri: utils.GetStrEnv("IPC_IMAGE_FRAMES", "/var/oraksil/ipc/images.ipc"),
-		GipanSoundFramesIpcUri: utils.GetStrEnv("IPC_SOUND_FRAMES", "/var/oraksil/ipc/sounds.ipc"),
-		GipanKeyInputsIpcUri:   utils.GetStrEnv("IPC_KEY_INPUTS", "/var/oraksil/ipc/keys.ipc"),
+		GipanImageFramesIpcUri: utils.GetStrEnv("IPC_IMAGE_FRAMES", "tcp://127.0.0.1:8765"),
+		GipanSoundFramesIpcUri: utils.GetStrEnv("IPC_SOUND_FRAMES", "tcp://127.0.0.1:8766"),
+		GipanCmdInputsIpcUri:   utils.GetStrEnv("IPC_CMD_INPUTS", "tcp://127.0.0.1:8767"),
 
 		TurnServerUri:      utils.GetStrEnv("TURN_URI", ""),
 		TurnServerUsername: utils.GetStrEnv("TURN_USERNAME", ""),

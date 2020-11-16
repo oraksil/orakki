@@ -7,7 +7,7 @@ type ServiceConfig struct {
 
 	GipanImageFramesIpcUri string
 	GipanSoundFramesIpcUri string
-	GipanKeyInputsIpcUri   string
+	GipanCmdInputsIpcUri   string
 
 	TurnServerUri      string
 	TurnServerUsername string

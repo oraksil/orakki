@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strconv"
 
+	"encoding/json"
+
 	"github.com/oraksil/orakki/internal/domain/engine"
 	"github.com/oraksil/orakki/pkg/utils"
 )
@@ -123,7 +125,7 @@ var gipanKeys = map[int]KeyPad{
 type GipanDriverImpl struct {
 	videoFrameBuffer utils.IpcBuffer
 	audioFrameBuffer utils.IpcBuffer
-	keyInputBuffer   utils.IpcBuffer
+	cmdInputBuffer   utils.IpcBuffer
 }
 
 func (g *GipanDriverImpl) ReadVideoFrame() ([]byte, error) {
@@ -132,6 +134,11 @@ func (g *GipanDriverImpl) ReadVideoFrame() ([]byte, error) {
 
 func (g *GipanDriverImpl) ReadAudioFrame() ([]byte, error) {
 	return g.audioFrameBuffer.Read()
+}
+
+type GipanCmd struct {
+	Cmd  string   `json:"cmd"`
+	Args []string `json:"args"`
 }
 
 func (g *GipanDriverImpl) WriteKeyInput(playerSlotNo int, key []byte) error {
@@ -143,23 +150,33 @@ func (g *GipanDriverImpl) WriteKeyInput(playerSlotNo int, key []byte) error {
 	basePad := reflect.ValueOf(baseKeyPad)
 	gipanPad := reflect.ValueOf(gipanKeys[playerSlotNo])
 
-	var gipanKey []byte = nil
+	gipanKeyStr := ""
 	for i := 0; i < basePad.NumField(); i++ {
 		if basePad.Field(i).Int() == int64(keyCode) {
 			keyName := basePad.Type().Field(i).Name
 			gipanKeyCode := gipanPad.FieldByName(keyName).Int()
-			gipanKey = []byte(fmt.Sprintf("%03d%c", gipanKeyCode, keyState))
+			gipanKeyStr = fmt.Sprintf("%03d%c", gipanKeyCode, keyState)
+			break
 		}
 	}
 
-	if gipanKey == nil {
+	if gipanKeyStr == "" {
 		return errors.New(fmt.Sprintf("failed to map key(%s) to gipan key.", string(key)))
 	}
 
-	return g.keyInputBuffer.Write(gipanKey)
+	gipanCmdJsonStr, err := json.Marshal(GipanCmd{
+		Cmd:  "key",
+		Args: []string{gipanKeyStr},
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return g.cmdInputBuffer.Write([]byte(gipanCmdJsonStr))
 }
 
-func NewGipanDriver(imagesIpcPath, soundsIpcPath, keysIpcPath string) engine.GipanDriver {
+func NewGipanDriver(imagesIpcPath, soundsIpcPath, cmdsIpcPath string) engine.GipanDriver {
 	maxVideoFrameBuffer := videoFrameSizeWidth * videoFrameSizeHeight * videoFps
 	vb, err := utils.NewIpcBufferForRead(imagesIpcPath, maxVideoFrameBuffer)
 	if err != nil {
@@ -172,7 +189,7 @@ func NewGipanDriver(imagesIpcPath, soundsIpcPath, keysIpcPath string) engine.Gip
 		return nil
 	}
 
-	kb, err := utils.NewIpcBufferForWrite(keysIpcPath)
+	cb, err := utils.NewIpcBufferForWrite(cmdsIpcPath)
 	if err != nil {
 		return nil
 	}
@@ -180,6 +197,6 @@ func NewGipanDriver(imagesIpcPath, soundsIpcPath, keysIpcPath string) engine.Gip
 	return &GipanDriverImpl{
 		videoFrameBuffer: vb,
 		audioFrameBuffer: ab,
-		keyInputBuffer:   kb,
+		cmdInputBuffer:   cb,
 	}
 }
