@@ -28,6 +28,11 @@ func newServiceConfig() *services.ServiceConfig {
 		TurnServerUri:      utils.GetStrEnv("TURN_URI", ""),
 		TurnServerUsername: utils.GetStrEnv("TURN_USERNAME", ""),
 		TurnServerPassword: utils.GetStrEnv("TURN_PASSWORD", ""),
+
+		PlayerHealthCheckTimeout:  utils.GetIntEnv("PLAYER_HEALTHCHECK_TIMEOUT", 20),
+		PlayerHealthCheckInterval: utils.GetIntEnv("PLAYER_HEALTHCHECK_INTERVAL", 3),
+		PlayerIdleCheckTimeout:    utils.GetIntEnv("PLAYER_IDLECHECK_TIMEOUT", 60),
+		PlayerIdleCheckInterval:   utils.GetIntEnv("PLAYER_IDLECHECK_INTERVAL", 7),
 	}
 }
 
@@ -89,6 +94,9 @@ func newSetupUseCase() *usecases.SetupUseCase {
 }
 
 func newGamingUseCase() *usecases.GamingUseCase {
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
 	var msgService services.MessageService
 	container.Make(&msgService)
 
@@ -96,6 +104,7 @@ func newGamingUseCase() *usecases.GamingUseCase {
 	container.Make(&engineFactory)
 
 	return &usecases.GamingUseCase{
+		ServiceConfig:  serviceConf,
 		MessageService: msgService,
 		EngineFactory:  engineFactory,
 	}

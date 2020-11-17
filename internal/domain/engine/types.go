@@ -1,5 +1,12 @@
 package engine
 
+type EngineProps struct {
+	PlayerHealthCheckTimeout  int
+	PlayerHealthCheckInterval int
+	PlayerIdleCheckTimeout    int
+	PlayerIdleCheckInterval   int
+}
+
 type InputEvent struct {
 	PlayerId int64
 	Type     int

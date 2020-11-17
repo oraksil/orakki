@@ -10,8 +10,7 @@ import (
 )
 
 type GamingUseCase struct {
-	// ServiceConfig  *services.ServiceConfig
-
+	ServiceConfig  *services.ServiceConfig
 	MessageService services.MessageService
 	EngineFactory  engine.EngineFactory
 
@@ -19,8 +18,15 @@ type GamingUseCase struct {
 }
 
 func (uc *GamingUseCase) StartGame(gameInfo *models.GameInfo) {
+	engineProps := engine.EngineProps{
+		PlayerHealthCheckTimeout:  uc.ServiceConfig.PlayerHealthCheckTimeout,
+		PlayerHealthCheckInterval: uc.ServiceConfig.PlayerHealthCheckInterval,
+		PlayerIdleCheckTimeout:    uc.ServiceConfig.PlayerIdleCheckTimeout,
+		PlayerIdleCheckInterval:   uc.ServiceConfig.PlayerIdleCheckInterval,
+	}
+
 	msgService := func(msgType string, payload interface{}) {
-		uc.sendMessageBack(msgType, payload)
+		uc.MessageService.SendToAny(msgType, payload)
 	}
 
 	go func() {
@@ -41,10 +47,6 @@ func (uc *GamingUseCase) StartGame(gameInfo *models.GameInfo) {
 		uc.gameEngine = uc.EngineFactory.CreateEngine()
 
 		fmt.Println("run game engine.")
-		uc.gameEngine.Run(gameInfo, msgService)
+		uc.gameEngine.Run(&engineProps, gameInfo, msgService)
 	}()
-}
-
-func (uc *GamingUseCase) sendMessageBack(msgType string, payload interface{}) {
-	uc.MessageService.SendToAny(msgType, payload)
 }

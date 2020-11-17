@@ -12,4 +12,9 @@ type ServiceConfig struct {
 	TurnServerUri      string
 	TurnServerUsername string
 	TurnServerPassword string
+
+	PlayerHealthCheckTimeout  int
+	PlayerHealthCheckInterval int
+	PlayerIdleCheckTimeout    int
+	PlayerIdleCheckInterval   int
 }

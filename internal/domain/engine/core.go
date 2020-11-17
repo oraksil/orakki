@@ -13,21 +13,36 @@ type GameEngine struct {
 	gipan          GipanDriver
 	messageService func(msgType string, payload interface{})
 
-	gameInfo        *models.GameInfo
+	// props
+	props    *EngineProps
+	gameInfo *models.GameInfo
+
+	// state
+	fsm        *fsm.FSM
+	poisonPill bool
+
+	// players
 	playerSlots     map[int64]int   // playerId: slotNo
 	playerLastPings map[int64]int64 // playerId: unix time in secs
 	playerLastInput int64
-
-	poisonPill bool
-
-	fsm *fsm.FSM
 }
 
 func (e *GameEngine) Reset() {
 	e.poisonPill = true
 }
 
-func (e *GameEngine) Run(gameInfo *models.GameInfo, msgService func(string, interface{})) {
+func (e *GameEngine) Run(props *EngineProps, gameInfo *models.GameInfo, msgService func(string, interface{})) {
+	e.messageService = msgService
+
+	e.props = props
+	e.gameInfo = gameInfo
+
+	e.fsm = e.newFSM()
+	e.fsm.Event("start")
+	e.poisonPill = false
+
+	e.updatePlayerLastInput()
+
 	// gipan -> renderer
 	go e.handleAudioFrame()
 	go e.handleVideoFrame()
@@ -38,14 +53,6 @@ func (e *GameEngine) Run(gameInfo *models.GameInfo, msgService func(string, inte
 	// handle unhealthy or idle players
 	go e.handleUnhealthyPlayers()
 	go e.handleIdlePlayers()
-	e.updatePlayerLastInput()
-
-	e.messageService = msgService
-	e.gameInfo = gameInfo
-	e.poisonPill = false
-
-	e.fsm = e.newFSM()
-	e.fsm.Event("start")
 }
 
 func (e *GameEngine) shutdown() {

@@ -50,8 +50,8 @@ func (e *GameEngine) leavePlayer(playerId int64) {
 }
 
 func (e *GameEngine) handleUnhealthyPlayers() {
-	const unhealthyTimeout int64 = 20 // in seconds
-	const checkInterval = 5 * time.Second
+	unhealthyTimeout := int64(e.props.PlayerHealthCheckTimeout)
+	checkInterval := time.Duration(e.props.PlayerHealthCheckInterval) * time.Second
 
 	kickUnhealthyPlayers := func() {
 		now := time.Now().Unix()
@@ -81,8 +81,8 @@ func (e *GameEngine) updatePlayerLiveness(playerId int64) {
 }
 
 func (e *GameEngine) handleIdlePlayers() {
-	const idleTimeout int64 = 60 // in seconds
-	const checkInterval = 3 * time.Second
+	idleTimeout := int64(e.props.PlayerIdleCheckTimeout)
+	checkInterval := time.Duration(e.props.PlayerIdleCheckInterval) * time.Second
 
 	handleIdleness := func() {
 		now := time.Now().Unix()
