@@ -8,6 +8,7 @@ require (
 	github.com/google/uuid v1.1.2 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/kr/text v0.2.0 // indirect
+	github.com/looplab/fsm v0.2.0
 	github.com/marten-seemann/qtls-go1-15 v0.1.1 // indirect
 	github.com/matoous/go-nanoid v1.4.1
 	github.com/mitchellh/mapstructure v1.3.3 // indirect

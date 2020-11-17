@@ -164,11 +164,11 @@ func (g *GipanDriverImpl) WriteKeyInput(playerSlotNo int, key []byte) error {
 		return errors.New(fmt.Sprintf("failed to map key(%s) to gipan key.", string(key)))
 	}
 
-	gipanCmdJsonStr, err := json.Marshal(GipanCmd{
-		Cmd:  "key",
-		Args: []string{gipanKeyStr},
-	})
+	return g.WriteCommand("key", []string{gipanKeyStr})
+}
 
+func (g *GipanDriverImpl) WriteCommand(cmd string, args []string) error {
+	gipanCmdJsonStr, err := json.Marshal(GipanCmd{Cmd: cmd, Args: args})
 	if err != nil {
 		return err
 	}
