@@ -56,6 +56,8 @@ func (e *GameEngine) Run(props *EngineProps, gameInfo *models.GameInfo, msgServi
 }
 
 func (e *GameEngine) shutdown() {
+	e.gipan.WriteCommand("ctrl", []string{"shutdown"})
+
 	fmt.Println("shutting down..")
 	os.Exit(0)
 }
