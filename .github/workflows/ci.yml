@@ -12,12 +12,9 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-    - uses: Actions-R-Us/default-env@v1
-
-    - name: Set environment variables
-      uses: allenevans/set-env@v1.0.0
-      with:
-        NANOMSG_BUILD_HOME: ${{ env.HOME }}/3rdparty/nanomsg
+    - name: Set the values
+      run: |
+        echo "NANOMSG_BUILD_HOME=$HOME/3rdparty/nanomsg" >> $GITHUB_ENV
   
     - name: Cache
       uses: actions/cache@v2.1.1

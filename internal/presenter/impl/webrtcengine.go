@@ -146,7 +146,7 @@ func (f *WebRTCGameEngineFactory) CreateEngine() *engine.GameEngine {
 		NewGipanDriver(
 			f.serviceConfig.GipanImageFramesIpcUri,
 			f.serviceConfig.GipanSoundFramesIpcUri,
-			f.serviceConfig.GipanKeyInputsIpcUri,
+			f.serviceConfig.GipanCmdInputsIpcUri,
 		),
 	)
 }
