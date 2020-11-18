@@ -23,10 +23,6 @@ const (
 )
 
 type WebRTCSessionImpl struct {
-	turnUri      string
-	turnUsername string
-	turnPassword string
-
 	peers      map[int64]*webrtc.PeerConnection
 	peerStates map[int64]PeerState
 
@@ -34,6 +30,10 @@ type WebRTCSessionImpl struct {
 	audioTracks map[int]*webrtc.Track
 
 	peerInputEvents chan engine.InputEvent
+
+	turnUri       string
+	turnSecretKey string
+	turnTTL       int
 }
 
 func (s *WebRTCSessionImpl) SetupIceHandlers(
@@ -229,16 +229,22 @@ func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64, new bool) *webrtc.PeerCon
 	}
 
 	iceServers := []webrtc.ICEServer{
-		{
-			URLs: []string{"stun:stun.l.google.com:19302"},
-		},
+		// {
+		// URLs: []string{"stun:stun.l.google.com:19302"},
+		// },
 	}
 
 	if s.turnUri != "" {
+		username, password := utils.NewTurnAuth(
+			strconv.FormatInt(peerId, 10),
+			s.turnSecretKey,
+			s.turnTTL,
+		)
+
 		iceServers = append(iceServers, webrtc.ICEServer{
 			URLs:       []string{s.turnUri},
-			Username:   s.turnUsername,
-			Credential: s.turnPassword,
+			Username:   username,
+			Credential: password,
 		})
 	}
 
@@ -307,12 +313,15 @@ func (s *WebRTCSessionImpl) getOrNewAudioTrackByPayloadType(payloadType int) *we
 	return track
 }
 
-func NewWebRTCSession(turnUri, turnUsername, turnPassword string) services.WebRTCSession {
+func NewWebRTCSession(turnUri, turnSecretKey string, turnTTL int) services.WebRTCSession {
 	return &WebRTCSessionImpl{
 		peers:           make(map[int64]*webrtc.PeerConnection),
 		peerStates:      make(map[int64]PeerState),
 		audioTracks:     make(map[int]*webrtc.Track),
 		videoTracks:     make(map[int]*webrtc.Track),
 		peerInputEvents: make(chan engine.InputEvent, 1024),
+		turnUri:         turnUri,
+		turnSecretKey:   turnSecretKey,
+		turnTTL:         turnTTL,
 	}
 }
