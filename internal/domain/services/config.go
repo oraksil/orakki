@@ -9,9 +9,9 @@ type ServiceConfig struct {
 	GipanSoundFramesIpcUri string
 	GipanCmdInputsIpcUri   string
 
-	TurnServerUri      string
-	TurnServerUsername string
-	TurnServerPassword string
+	TurnServerUri       string
+	TurnServerSecretKey string
+	TurnServerTTL       int
 
 	PlayerHealthCheckTimeout  int
 	PlayerHealthCheckInterval int

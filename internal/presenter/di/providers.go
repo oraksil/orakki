@@ -25,9 +25,9 @@ func newServiceConfig() *services.ServiceConfig {
 		GipanSoundFramesIpcUri: utils.GetStrEnv("IPC_SOUND_FRAMES", "tcp://../gipan/sounds.ipc"),
 		GipanCmdInputsIpcUri:   utils.GetStrEnv("IPC_CMD_INPUTS", "tcp://../gipan/cmds/ipc"),
 
-		TurnServerUri:      utils.GetStrEnv("TURN_URI", ""),
-		TurnServerUsername: utils.GetStrEnv("TURN_USERNAME", ""),
-		TurnServerPassword: utils.GetStrEnv("TURN_PASSWORD", ""),
+		TurnServerUri:       utils.GetStrEnv("TURN_URI", ""),
+		TurnServerSecretKey: utils.GetStrEnv("TURN_SECRET_KEY", ""),
+		TurnServerTTL:       utils.GetIntEnv("TURN_TTL", 3600),
 
 		PlayerHealthCheckTimeout:  utils.GetIntEnv("PLAYER_HEALTHCHECK_TIMEOUT", 20),
 		PlayerHealthCheckInterval: utils.GetIntEnv("PLAYER_HEALTHCHECK_INTERVAL", 3),
@@ -60,8 +60,8 @@ func newWebRTCSession() services.WebRTCSession {
 
 	return impl.NewWebRTCSession(
 		serviceConf.TurnServerUri,
-		serviceConf.TurnServerUsername,
-		serviceConf.TurnServerPassword,
+		serviceConf.TurnServerSecretKey,
+		serviceConf.TurnServerTTL,
 	)
 }
 
