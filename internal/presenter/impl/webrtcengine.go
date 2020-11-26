@@ -123,6 +123,8 @@ func newWebRTCFrontInterface(
 type WebRTCGameEngineFactory struct {
 	serviceConfig *services.ServiceConfig
 
+	gipanDriver engine.GipanDriver
+
 	renderContext  engine.RenderContext
 	inputContext   engine.InputContext
 	sessionContext engine.SessionContext
@@ -143,16 +145,13 @@ func (f *WebRTCGameEngineFactory) CanCreateEngine() bool {
 func (f *WebRTCGameEngineFactory) CreateEngine() *engine.GameEngine {
 	return engine.NewGameEngine(
 		newWebRTCFrontInterface(f.renderContext, f.inputContext, f.sessionContext),
-		NewGipanDriver(
-			f.serviceConfig.GipanImageFramesIpcUri,
-			f.serviceConfig.GipanSoundFramesIpcUri,
-			f.serviceConfig.GipanCmdInputsIpcUri,
-		),
+		f.gipanDriver,
 	)
 }
 
-func NewGameEngineFactory(serviceConf *services.ServiceConfig) engine.EngineFactory {
+func NewGameEngineFactory(serviceConf *services.ServiceConfig, gipanDrv engine.GipanDriver) engine.EngineFactory {
 	return &WebRTCGameEngineFactory{
 		serviceConfig: serviceConf,
+		gipanDriver:   gipanDrv,
 	}
 }

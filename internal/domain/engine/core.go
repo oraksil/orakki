@@ -1,10 +1,6 @@
 package engine
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/looplab/fsm"
 	"github.com/oraksil/orakki/internal/domain/models"
 )
 
@@ -12,13 +8,13 @@ type GameEngine struct {
 	front          FrontInterface
 	gipan          GipanDriver
 	messageService func(msgType string, payload interface{})
+	eventHandler   func(event string)
 
 	// props
 	props    *EngineProps
 	gameInfo *models.GameInfo
 
 	// state
-	fsm        *fsm.FSM
 	poisonPill bool
 
 	// players
@@ -31,14 +27,17 @@ func (e *GameEngine) Reset() {
 	e.poisonPill = true
 }
 
-func (e *GameEngine) Run(props *EngineProps, gameInfo *models.GameInfo, msgService func(string, interface{})) {
+func (e *GameEngine) Run(
+	props *EngineProps,
+	gameInfo *models.GameInfo,
+	msgService func(string, interface{}),
+	eventHandler func(string)) {
+
 	e.messageService = msgService
+	e.eventHandler = eventHandler
 
 	e.props = props
 	e.gameInfo = gameInfo
-
-	e.fsm = e.newFSM()
-	e.fsm.Event("start")
 	e.poisonPill = false
 
 	e.updatePlayerLastInput()
@@ -53,13 +52,6 @@ func (e *GameEngine) Run(props *EngineProps, gameInfo *models.GameInfo, msgServi
 	// handle unhealthy or idle players
 	go e.handleUnhealthyPlayers()
 	go e.handleIdlePlayers()
-}
-
-func (e *GameEngine) shutdown() {
-	e.gipan.WriteCommand("ctrl", []string{"shutdown"})
-
-	fmt.Println("shutting down..")
-	os.Exit(0)
 }
 
 func NewGameEngine(f FrontInterface, g GipanDriver) *GameEngine {

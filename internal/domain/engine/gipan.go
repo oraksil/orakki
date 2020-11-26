@@ -1,7 +1,5 @@
 package engine
 
-import "fmt"
-
 func (e *GameEngine) handleAudioFrame() {
 	for {
 		buf, err := e.gipan.ReadAudioFrame()
@@ -32,12 +30,8 @@ func (e *GameEngine) handleVideoFrame() {
 	}
 }
 
-func (e *GameEngine) pauseGipan() {
-	fmt.Println("pausing gipan")
-	e.gipan.WriteCommand("ctrl", []string{"pause"})
-}
-
-func (e *GameEngine) resumeGipan() {
-	fmt.Println("resuming gipan")
-	e.gipan.WriteCommand("ctrl", []string{"resume"})
+func (e *GameEngine) handleKeyInput(in InputEvent) {
+	if slotNo, ok := e.playerSlots[in.PlayerId]; ok {
+		e.gipan.WriteKeyInput(slotNo, in.Data)
+	}
 }

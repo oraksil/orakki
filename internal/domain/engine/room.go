@@ -87,11 +87,11 @@ func (e *GameEngine) handleIdlePlayers() {
 	handleIdleness := func() {
 		now := time.Now().Unix()
 		if now-e.playerLastInput > idleTimeout*3 {
-			e.fsm.Event("suspend")
+			e.eventHandler("suspend")
 		} else if now-e.playerLastInput > idleTimeout {
-			e.fsm.Event("idle")
+			e.eventHandler("idle")
 		} else {
-			e.fsm.Event("resume")
+			e.eventHandler("resume")
 		}
 	}
 

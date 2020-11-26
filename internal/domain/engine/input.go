@@ -25,9 +25,7 @@ func (e *GameEngine) handleInputEvent() {
 			e.updatePlayerLiveness(in.PlayerId)
 
 		case InputEventTypeKeyMessage:
-			if slotNo, ok := e.playerSlots[in.PlayerId]; ok {
-				e.gipan.WriteKeyInput(slotNo, in.Data)
-			}
+			e.handleKeyInput(in)
 			e.updatePlayerLastInput()
 		}
 

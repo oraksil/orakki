@@ -65,11 +65,25 @@ func newWebRTCSession() services.WebRTCSession {
 	)
 }
 
+func newGipanDriver() engine.GipanDriver {
+	var serviceConf *services.ServiceConfig
+	container.Make(&serviceConf)
+
+	return impl.NewGipanDriver(
+		serviceConf.GipanImageFramesIpcUri,
+		serviceConf.GipanSoundFramesIpcUri,
+		serviceConf.GipanCmdInputsIpcUri,
+	)
+}
+
 func newEngineFactory() engine.EngineFactory {
 	var serviceConf *services.ServiceConfig
 	container.Make(&serviceConf)
 
-	return impl.NewGameEngineFactory(serviceConf)
+	var gipanDrv engine.GipanDriver
+	container.Make(&gipanDrv)
+
+	return impl.NewGameEngineFactory(serviceConf, gipanDrv)
 }
 
 func newSetupUseCase() *usecases.SetupUseCase {
@@ -103,10 +117,14 @@ func newGamingUseCase() *usecases.GamingUseCase {
 	var engineFactory engine.EngineFactory
 	container.Make(&engineFactory)
 
+	var gipanDrv engine.GipanDriver
+	container.Make(&gipanDrv)
+
 	return &usecases.GamingUseCase{
 		ServiceConfig:  serviceConf,
 		MessageService: msgService,
 		EngineFactory:  engineFactory,
+		GipanDriver:    gipanDrv,
 	}
 }
 

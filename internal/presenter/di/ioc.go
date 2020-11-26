@@ -12,6 +12,7 @@ func InitContainer() {
 	container.Singleton(newMqService)
 	container.Singleton(newMessageService)
 	container.Singleton(newWebRTCSession)
+	container.Singleton(newGipanDriver)
 	container.Singleton(newEngineFactory)
 	container.Singleton(newSetupUseCase)
 	container.Singleton(newGamingUseCase)
