@@ -229,9 +229,9 @@ func (s *WebRTCSessionImpl) getOrNewPeer(peerId int64, new bool) *webrtc.PeerCon
 	}
 
 	iceServers := []webrtc.ICEServer{
-		// {
-		// URLs: []string{"stun:stun.l.google.com:19302"},
-		// },
+		{
+			URLs: []string{"stun:stun.l.google.com:19302"},
+		},
 	}
 
 	if s.turnUri != "" {
