@@ -2,7 +2,10 @@ package main
 
 import (
 	"github.com/joho/godotenv"
+	"github.com/oraksil/orakki/internal/domain/services"
 	"github.com/oraksil/orakki/internal/presenter/di"
+	"github.com/oraksil/orakki/internal/presenter/mq/handlers"
+	"github.com/sangwonl/mqrpc"
 )
 
 func main() {
@@ -10,10 +13,15 @@ func main() {
 
 	di.InitContainer()
 
-	mqSvc := di.InjectMqService()
-	mqSvc.AddHandler(di.InjectSetupHandler())
-	mqSvc.AddHandler(di.InjectGamingHandler())
+	di.Resolve(func(
+		serviceConf *services.ServiceConfig,
+		mqSvc *mqrpc.MqService,
+		setupHandler *handlers.SetupHandler,
+		gamingHandler *handlers.GamingHandler) {
 
-	conf := di.InjectServiceConfig()
-	mqSvc.Run(conf.MqRpcIdentifier, false)
+		mqSvc.AddHandler(setupHandler)
+		mqSvc.AddHandler(gamingHandler)
+
+		mqSvc.Run(serviceConf.MqRpcIdentifier, false)
+	})
 }

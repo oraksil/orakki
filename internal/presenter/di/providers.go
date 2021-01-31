@@ -3,7 +3,6 @@ package di
 import (
 	"os"
 
-	"github.com/golobby/container"
 	"github.com/oraksil/orakki/internal/domain/engine"
 	"github.com/oraksil/orakki/internal/domain/services"
 	"github.com/oraksil/orakki/internal/domain/usecases"
@@ -36,10 +35,7 @@ func newServiceConfig() *services.ServiceConfig {
 	}
 }
 
-func newMqService() *mqrpc.MqService {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
+func newMqService(serviceConf *services.ServiceConfig) *mqrpc.MqService {
 	svc, err := mqrpc.NewMqService(serviceConf.MqRpcUri, serviceConf.MqRpcNamespace)
 	if err != nil {
 		panic(err)
@@ -47,17 +43,11 @@ func newMqService() *mqrpc.MqService {
 	return svc
 }
 
-func newMessageService() services.MessageService {
-	var mqService *mqrpc.MqService
-	container.Make(&mqService)
-
+func newMessageService(mqService *mqrpc.MqService) services.MessageService {
 	return &mqrpc.DefaultMessageServiceImpl{MqService: mqService}
 }
 
-func newWebRTCSession() services.WebRTCSession {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
+func newWebRTCSession(serviceConf *services.ServiceConfig) services.WebRTCSession {
 	return impl.NewWebRTCSession(
 		serviceConf.TurnServerUri,
 		serviceConf.TurnServerSecretKey,
@@ -65,10 +55,7 @@ func newWebRTCSession() services.WebRTCSession {
 	)
 }
 
-func newGipanDriver() engine.GipanDriver {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
+func newGipanDriver(serviceConf *services.ServiceConfig) engine.GipanDriver {
 	return impl.NewGipanDriver(
 		serviceConf.GipanImageFramesIpcUri,
 		serviceConf.GipanSoundFramesIpcUri,
@@ -76,29 +63,17 @@ func newGipanDriver() engine.GipanDriver {
 	)
 }
 
-func newEngineFactory() engine.EngineFactory {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
-	var gipanDrv engine.GipanDriver
-	container.Make(&gipanDrv)
-
+func newEngineFactory(
+	serviceConf *services.ServiceConfig,
+	gipanDrv engine.GipanDriver) engine.EngineFactory {
 	return impl.NewGameEngineFactory(serviceConf, gipanDrv)
 }
 
-func newSetupUseCase() *usecases.SetupUseCase {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
-	var msgService services.MessageService
-	container.Make(&msgService)
-
-	var webRTCSession services.WebRTCSession
-	container.Make(&webRTCSession)
-
-	var engineFactory engine.EngineFactory
-	container.Make(&engineFactory)
-
+func newSetupUseCase(
+	serviceConf *services.ServiceConfig,
+	msgService services.MessageService,
+	webRTCSession services.WebRTCSession,
+	engineFactory engine.EngineFactory) *usecases.SetupUseCase {
 	return &usecases.SetupUseCase{
 		ServiceConfig:  serviceConf,
 		MessageService: msgService,
@@ -107,19 +82,11 @@ func newSetupUseCase() *usecases.SetupUseCase {
 	}
 }
 
-func newGamingUseCase() *usecases.GamingUseCase {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
-	var msgService services.MessageService
-	container.Make(&msgService)
-
-	var engineFactory engine.EngineFactory
-	container.Make(&engineFactory)
-
-	var gipanDrv engine.GipanDriver
-	container.Make(&gipanDrv)
-
+func newGamingUseCase(
+	serviceConf *services.ServiceConfig,
+	msgService services.MessageService,
+	engineFactory engine.EngineFactory,
+	gipanDrv engine.GipanDriver) *usecases.GamingUseCase {
 	return &usecases.GamingUseCase{
 		ServiceConfig:  serviceConf,
 		MessageService: msgService,
@@ -128,26 +95,18 @@ func newGamingUseCase() *usecases.GamingUseCase {
 	}
 }
 
-func newSetupHandler() *handlers.SetupHandler {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
-	var setupUseCase *usecases.SetupUseCase
-	container.Make(&setupUseCase)
-
+func newSetupHandler(
+	serviceConf *services.ServiceConfig,
+	setupUseCase *usecases.SetupUseCase) *handlers.SetupHandler {
 	return &handlers.SetupHandler{
 		ServiceConfig: serviceConf,
 		SetupUseCase:  setupUseCase,
 	}
 }
 
-func newGamingHandler() *handlers.GamingHandler {
-	var serviceConf *services.ServiceConfig
-	container.Make(&serviceConf)
-
-	var gamingUseCase *usecases.GamingUseCase
-	container.Make(&gamingUseCase)
-
+func newGamingHandler(
+	serviceConf *services.ServiceConfig,
+	gamingUseCase *usecases.GamingUseCase) *handlers.GamingHandler {
 	return &handlers.GamingHandler{
 		ServiceConfig: serviceConf,
 		GamingUseCase: gamingUseCase,
