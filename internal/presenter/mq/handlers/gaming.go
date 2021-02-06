@@ -23,8 +23,8 @@ func (h *GamingHandler) handleStartGame(ctx *mqrpc.Context) interface{} {
 	return nil
 }
 
-func (h *GamingHandler) Routes() []mqrpc.Route {
-	return []mqrpc.Route{
+func (h *GamingHandler) Routes() []Route {
+	return []Route{
 		{MsgType: models.MsgStartGame, Handler: h.handleStartGame},
 	}
 }

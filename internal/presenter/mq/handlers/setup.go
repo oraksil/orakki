@@ -41,8 +41,8 @@ func (h *SetupHandler) handleRemoteIceCandidate(ctx *mqrpc.Context) interface{} 
 	return nil
 }
 
-func (h *SetupHandler) Routes() []mqrpc.Route {
-	return []mqrpc.Route{
+func (h *SetupHandler) Routes() []Route {
+	return []Route{
 		{MsgType: models.MsgPrepareOrakki, Handler: h.handlePrepareOrakki},
 		{MsgType: models.MsgSetupWithNewOffer, Handler: h.handleSetupWithNewOffer},
 		{MsgType: models.MsgRemoteIceCandidate, Handler: h.handleRemoteIceCandidate},

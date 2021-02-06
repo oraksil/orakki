@@ -36,7 +36,7 @@ func newServiceConfig() *services.ServiceConfig {
 }
 
 func newMqService(serviceConf *services.ServiceConfig) *mqrpc.MqService {
-	svc, err := mqrpc.NewMqService(serviceConf.MqRpcUri, serviceConf.MqRpcNamespace)
+	svc, err := mqrpc.NewMqService(serviceConf.MqRpcUri, serviceConf.MqRpcNamespace, serviceConf.MqRpcIdentifier)
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +44,7 @@ func newMqService(serviceConf *services.ServiceConfig) *mqrpc.MqService {
 }
 
 func newMessageService(mqService *mqrpc.MqService) services.MessageService {
-	return &mqrpc.DefaultMessageServiceImpl{MqService: mqService}
+	return &mqrpc.DefaultMessageService{MqService: mqService}
 }
 
 func newWebRTCSession(serviceConf *services.ServiceConfig) services.WebRTCSession {
