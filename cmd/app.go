@@ -10,8 +10,7 @@ import (
 
 func setupRoutes(mqSvc *mqrpc.MqService, routes []handlers.Route) {
 	for _, r := range routes {
-		err := mqSvc.AddHandler(r.MsgType, r.Handler)
-		panic(err)
+		mqSvc.AddHandler(r.MsgType, r.Handler)
 	}
 }
 
