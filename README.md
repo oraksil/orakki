@@ -1,8 +1,15 @@
-## Setup
+# Orakki
 
+`Orakki` means an arcade gaming console in Korean. It is a core instance that provides clients with game streaming via WebRTC. It fetches encoded video/audio frames from Gipan and sends those packets to client. And it receives player controller input and forwards it to Gipan.
 
-## TURN Server
-```
-$ docker run -it --entrypoint sh -p 3478:3478 -p 49160-49200:49160-49200/udp instrumentisto/coturn
-$ /usr/local/bin/docker-entrypoint.sh -n --log-file=stdout --external-ip='$(detect-external-ip)' --min-port=49160 --max-port=49200 --user gamz:gamz
+`Orakki` instance should be provisioned on demand in a cluster mode. It might need TURN server in some cases where client cannot communicate with server directly. It's built with Golang.
+
+# Prerequites
+
+`RabbitMQ` is required for `Orakki` to communicate with `Azumma`. Please refer to [this](https://github.com/oraksil/azumma#message-queue-rabbitmq) for more details.
+
+# Run
+
+```bash
+$ go run cmd/app.go
 ```
