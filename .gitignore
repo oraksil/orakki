@@ -1,6 +1,3 @@
 *.raw
-.vscode/
 cfg/
-
-.env
 
